@@ -87,7 +87,7 @@ const io = new Server<
 
 // ─────────────────────────── Turn Timer (server-side enforcement) ─────────────
 
-const TURN_TIMEOUT_MS = 12_000;
+const TURN_TIMEOUT_MS = 17_000;
 const roomTurnTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function resetTurnTimer(roomId: string): void {
@@ -454,7 +454,29 @@ io.on('connection', (socket) => {
     console.log(`[Room ${roomId}] Intercepcion exitosa por ${interceptorName}`);
   });
 
-  // ── RESTART_GAME ─────────────────────────────────────────────────────────────
+  // -- SEND_REACTION ────────────────────────────────────────────────────────
+  socket.on('SEND_REACTION', (payload) => {
+    const roomId = socket.data.roomId;
+    if (!roomId) return;
+
+    const emoji = typeof payload?.emoji === 'string'
+      ? payload.emoji.slice(0, 8).trim()
+      : null;
+    if (!emoji) return;
+
+    const room = getRoom(roomId);
+    const player = room?.gameState.players.find(p => p.id === socket.id);
+    const playerColor = player?.avatarColor ?? '#FF6A1A';
+
+    io.to(roomId).emit('PLAYER_REACTION', {
+      playerId: socket.id,
+      playerName: socket.data.playerName ?? 'Jugador',
+      playerColor,
+      emoji,
+    });
+  });
+
+    // ── RESTART_GAME ─────────────────────────────────────────────────────────────
   socket.on('RESTART_GAME', () => {
     const roomId = socket.data.roomId;
     if (!roomId) return;

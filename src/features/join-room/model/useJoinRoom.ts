@@ -7,7 +7,7 @@ import { useGameStore } from '@/src/entities/game';
 export function useJoinRoom() {
   const [isLoading, setIsLoading] = useState(false);
   const { setRoom, setConnectionStatus, setSocketId, setGameView, setGameEnd,
-          handlePlayResult, handleInterceptResult, addNotification, reset } = useGameStore();
+          handlePlayResult, handleInterceptResult, addNotification, addFloatingReaction, reset } = useGameStore();
 
   const joinRoom = useCallback((roomId: string, playerName: string) => {
     setIsLoading(true);
@@ -24,6 +24,7 @@ export function useJoinRoom() {
     socket.off('PLAY_RESULT');
     socket.off('INTERCEPT_RESULT');
     socket.off('ERROR');
+    socket.off('PLAYER_REACTION');
 
     socket.on('connect', () => {
       setConnectionStatus('connected');
@@ -64,6 +65,10 @@ export function useJoinRoom() {
       handleInterceptResult(result);
     });
 
+    socket.on('PLAYER_REACTION', ({ playerId, playerName, playerColor, emoji }) => {
+      addFloatingReaction(emoji, playerName, playerColor);
+    });
+
     socket.on('ERROR', ({ message }) => {
       addNotification('error', message);
       setIsLoading(false);
@@ -76,7 +81,7 @@ export function useJoinRoom() {
       setIsLoading(false);
     }
   }, [setRoom, setConnectionStatus, setSocketId, setGameView, setGameEnd,
-      handlePlayResult, handleInterceptResult, addNotification, reset]);
+      handlePlayResult, handleInterceptResult, addNotification, addFloatingReaction, reset]);
 
   return { joinRoom, isLoading };
 }

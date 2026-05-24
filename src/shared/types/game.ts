@@ -96,6 +96,15 @@ export interface GameStateView {
   turnStartedAt: number;
 }
 
+
+export interface SendReactionPayload { emoji: string; }
+export interface PlayerReactionPayload {
+  playerId: string;
+  playerName: string;
+  playerColor: string;
+  emoji: string;
+}
+
 // -- Payloads de Socket -------------------------------------------------------
 
 export interface JoinRoomPayload { roomId: string; playerName: string; }
@@ -143,6 +152,7 @@ export interface ClientToServerEvents {
   FLIP_BLIND: (payload: FlipBlindPayload) => void;
   INTERCEPT_TURN: (payload: InterceptTurnPayload) => void;
   RESTART_GAME: () => void;
+  SEND_REACTION: (payload: SendReactionPayload) => void;
 }
 
 export interface ServerToClientEvents {
@@ -152,5 +162,6 @@ export interface ServerToClientEvents {
   GAME_START: (payload: GameStartPayload) => void;
   GAME_END: (payload: GameEndPayload) => void;
   GAME_RESTARTED: () => void;
+  PLAYER_REACTION: (payload: PlayerReactionPayload) => void;
   ERROR: (payload: ErrorPayload) => void;
 }

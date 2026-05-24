@@ -249,6 +249,15 @@ export interface ErrorPayload {
 
 // ─── Mapa de eventos (tipado fuerte para socket.io) ───────────────────────────
 
+
+export interface SendReactionPayload { emoji: string; }
+export interface PlayerReactionPayload {
+  playerId: string;
+  playerName: string;
+  playerColor: string;
+  emoji: string;
+}
+
 /** Eventos que el CLIENTE emite al servidor */
 export interface ClientToServerEvents {
   JOIN_ROOM: (payload: JoinRoomPayload) => void;
@@ -258,6 +267,7 @@ export interface ClientToServerEvents {
   FLIP_BLIND: (payload: FlipBlindPayload) => void;
   INTERCEPT_TURN: (payload: InterceptTurnPayload) => void;
   RESTART_GAME: () => void;
+  SEND_REACTION: (payload: SendReactionPayload) => void;
 }
 
 /** Eventos que el SERVIDOR emite al cliente */
@@ -268,6 +278,7 @@ export interface ServerToClientEvents {
   GAME_START: (payload: GameStartPayload) => void;
   GAME_END: (payload: GameEndPayload) => void;
   GAME_RESTARTED: () => void;
+  PLAYER_REACTION: (payload: PlayerReactionPayload) => void;
   ERROR: (payload: ErrorPayload) => void;
 }
 

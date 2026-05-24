@@ -6,6 +6,7 @@
 // =============================================================================
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 // ─────────────────────────── Componente Carta ────────────────────────────────
 
@@ -282,7 +283,7 @@ export function HowToPlay() {
           fontSize: 15, fontWeight: 700, fontFamily: 'monospace',
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'all 0.15s',
-          zIndex: 10,
+          zIndex: 600,
         }}
         onMouseEnter={e => {
           (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,106,26,0.25)';
@@ -296,8 +297,8 @@ export function HowToPlay() {
         ?
       </button>
 
-      {/* Overlay + Modal */}
-      {open && (
+      {/* Overlay + Modal — portal to escape overflow:hidden */}
+      {open && typeof document !== 'undefined' && createPortal((
         <div
           role="dialog"
           aria-modal="true"
@@ -421,7 +422,7 @@ export function HowToPlay() {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
     </>
   );
 }

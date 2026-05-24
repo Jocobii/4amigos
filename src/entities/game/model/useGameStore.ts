@@ -22,6 +22,15 @@ interface Notification {
   timestamp: number;
 }
 
+
+interface FloatingReaction {
+  id: string;
+  emoji: string;
+  playerName: string;
+  color: string;
+  x: number; // 15-85 (%)
+}
+
 interface GameStore {
   // -- Conexion ---------------------------------------------------------------
   connectionStatus: ConnectionStatus;
@@ -35,6 +44,7 @@ interface GameStore {
 
   // -- UI local ---------------------------------------------------------------
   selectedCardIds: string[];
+  floatingReactions: FloatingReaction[];
   notifications: Notification[];
   interceptFlash: boolean;
   burnActive: boolean;
@@ -54,6 +64,7 @@ interface GameStore {
   addNotification: (type: Notification['type'], message: string) => void;
   dismissNotification: (id: string) => void;
   setInterceptFlash: (v: boolean) => void;
+  addFloatingReaction: (emoji: string, playerName: string, color: string) => void;
   reset: () => void;
 }
 
@@ -73,6 +84,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   burnActive: false,
   interceptActive: false,
   lastSeenActivityId: null,
+  floatingReactions: [],
 
   // -- Actions ----------------------------------------------------------------
   setConnectionStatus: (status) => set({ connectionStatus: status }),
@@ -167,6 +179,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   dismissNotification: (id) =>
     set(s => ({ notifications: s.notifications.filter(n => n.id !== id) })),
 
+  addFloatingReaction: (emoji, playerName, color) => {
+    const id = 'rxn_' + (++notifCounter);
+    const x = 15 + Math.random() * 70; // random horizontal position
+    const reaction: FloatingReaction = { id, emoji, playerName, color, x };
+    set(s => ({ floatingReactions: [...s.floatingReactions.slice(-8), reaction] }));
+    setTimeout(() => set(s => ({ floatingReactions: s.floatingReactions.filter(r => r.id !== id) })), 2800);
+  },
+
   setInterceptFlash: (v) => set({ interceptFlash: v }),
 
   reset: () => set({
@@ -180,5 +200,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     burnActive: false,
     interceptActive: false,
     lastSeenActivityId: null,
+    floatingReactions: [],
   }),
 }));
