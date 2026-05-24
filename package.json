@@ -7,6 +7,7 @@
     "node": ">=18"
   },
   "scripts": {
+<<<<<<< Updated upstream
     "dev": "tsx watch src/server.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/server.js",
@@ -24,5 +25,35 @@
     "@types/node": "^20.17.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
+=======
+    "dev": "next dev",
+    "dev:server": "cd packages/server && npx tsx watch src/server.ts",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm dev:server\"",
+    "build": "next build",
+    "build:server": "cd packages/server && npx tsc",
+    "start": "next start",
+    "start:server": "cd packages/server && node dist/server.js",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "typecheck:server": "cd packages/server && npx tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "socket.io-client": "^4.8.3",
+    "zustand": "^5.0.13"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^9.1.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+>>>>>>> Stashed changes
   }
 }
