@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useJoinRoom } from '../model/useJoinRoom';
+import { HowToPlay } from '@/src/features/how-to-play';
 
 export function LobbyForm() {
   const [roomId, setRoomId] = useState('');
@@ -51,7 +52,10 @@ export function LobbyForm() {
       justifyContent: 'center',
       padding: 24,
       fontFamily: 'Inter, system-ui, sans-serif',
+      position: 'relative',
     }}>
+      {/* Botón ? y modal de reglas */}
+      <HowToPlay />
       {/* Fondo de textura de madera */}
       <div style={{
         position: 'fixed', inset: 0,
