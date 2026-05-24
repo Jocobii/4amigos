@@ -349,6 +349,160 @@ function SpecialCardEffect({ lastActivity }: { lastActivity: ActivityEvent[] }) 
   );
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Invite Lobby Panel — mostrado mientras la sala espera jugadores
+// ─────────────────────────────────────────────────────────────────────────────
+
+function InviteLobbyPanel({ roomId, players, selfName, selfColor, currentPlayerId }: {
+  roomId: string;
+  players: PlayerView[];
+  selfName: string;
+  selfColor: string;
+  currentPlayerId: string;
+}) {
+  const [copied, setCopied] = React.useState(false);
+
+  const getInviteLink = () => {
+    if (typeof window === 'undefined') return '';
+    const base = window.location.origin + window.location.pathname;
+    return base + '?room=' + roomId;
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getInviteLink());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+      const el = document.createElement('textarea');
+      el.value = getInviteLink();
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const shareWhatsApp = () => {
+    const msg = encodeURIComponent('Juega 4 Amigos conmigo! ' + getInviteLink());
+    window.open('https://wa.me/?text=' + msg, '_blank');
+  };
+
+  const MAX = 4;
+  // Build display list: self first, then opponents
+  const allPlayers = [
+    ...(selfName ? [{ name: selfName, avatarColor: selfColor, id: 'self' }] : []),
+    ...players.map(p => ({ name: p.name, avatarColor: p.avatarColor, id: p.id })),
+  ];
+  const slots = Array.from({ length: MAX });
+
+  return (
+    <div style={{
+      position: 'absolute', top: '50%', left: '50%',
+      transform: 'translate(-50%, -50%)',
+      zIndex: 35, width: 340,
+      background: 'rgba(14,11,8,0.94)',
+      border: '1px solid rgba(255,106,26,0.25)',
+      borderRadius: 14, padding: '28px 28px 24px',
+      backdropFilter: 'blur(16px)',
+      boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
+    }}>
+      {/* Codigo de sala */}
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <div style={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace', letterSpacing: 3, color: 'rgba(246,239,222,0.4)', marginBottom: 6 }}>
+          CODIGO DE SALA
+        </div>
+        <div style={{
+          fontFamily: 'Anton, sans-serif', fontSize: 42, letterSpacing: 8,
+          color: '#FF6A1A', textShadow: '0 0 24px rgba(255,106,26,0.4)',
+        }}>
+          {roomId}
+        </div>
+      </div>
+
+      {/* Slots de jugadores */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace', letterSpacing: 2, color: 'rgba(246,239,222,0.4)', marginBottom: 8 }}>
+          JUGADORES ({players.length}/{MAX})
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {slots.map((_, i) => {
+            const p = allPlayers[i];
+            return (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 12px', borderRadius: 8,
+                background: p ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
+                border: p ? '1px solid rgba(255,255,255,0.1)' : '1px dashed rgba(255,255,255,0.08)',
+              }}>
+                {p ? (
+                  <>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: '50%',
+                      background: p.avatarColor,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: 'Anton, sans-serif', fontSize: 13, color: '#0e0b08',
+                      flexShrink: 0,
+                    }}>
+                      {p.name[0]}
+                    </div>
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: '#f6efde' }}>
+                      {p.name}
+                    </span>
+                    <span style={{ marginLeft: 'auto', fontSize: 9, fontFamily: 'JetBrains Mono, monospace', color: '#22c55e', letterSpacing: 1 }}>
+                      LISTO
+                    </span>
+                  </>
+                ) : (
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'rgba(246,239,222,0.2)', letterSpacing: 1 }}>
+                    Esperando jugador...
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Botones de compartir */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={copyLink} style={{
+          flex: 1, padding: '11px 8px',
+          background: copied ? 'rgba(34,197,94,0.2)' : 'rgba(255,106,26,0.12)',
+          border: '1.5px solid ' + (copied ? 'rgba(34,197,94,0.5)' : 'rgba(255,106,26,0.35)'),
+          borderRadius: 8, cursor: 'pointer',
+          fontFamily: 'Anton, sans-serif', fontSize: 12, letterSpacing: 2,
+          color: copied ? '#22c55e' : '#FF6A1A',
+          transition: 'all 0.2s',
+        }}>
+          {copied ? 'COPIADO!' : 'COPIAR LINK'}
+        </button>
+        <button onClick={shareWhatsApp} style={{
+          flex: 1, padding: '11px 8px',
+          background: 'rgba(37,211,102,0.1)',
+          border: '1.5px solid rgba(37,211,102,0.35)',
+          borderRadius: 8, cursor: 'pointer',
+          fontFamily: 'Anton, sans-serif', fontSize: 12, letterSpacing: 2,
+          color: '#25D366',
+          transition: 'all 0.2s',
+        }}>
+          WHATSAPP
+        </button>
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: 14 }}>
+        <span style={{ fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: 'rgba(246,239,222,0.3)', letterSpacing: 1 }}>
+          Minimo 2 jugadores para iniciar
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Center Table
 // ─────────────────────────────────────────────────────────────────────────────
@@ -963,7 +1117,10 @@ export function GameBoard() {
           position={POSITIONS[i % 3]!} />
       ))}
 
-      <CenterTable topCard={discardTopCard} deckCount={deckCount} pileCount={discardPileCount} burnActive={burnActive} />
+      {phase === 'lobby'
+        ? <InviteLobbyPanel roomId={roomId} players={opponents} selfName={self?.name ?? ''} selfColor={self?.avatarColor ?? '#FF6A1A'} currentPlayerId={gameView.currentPlayerId} />
+        : <CenterTable topCard={discardTopCard} deckCount={deckCount} pileCount={discardPileCount} burnActive={burnActive} />
+      }
 
       <SpecialCardEffect lastActivity={lastActivity} />
 
