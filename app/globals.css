@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: #0a0807;
+  color: #f6efde;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* Scrollbar oscuro para áreas que lo necesiten */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 106, 26, 0.4);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 106, 26, 0.7);
+}
+
+/* Animación de intercepción */
+@keyframes intercept-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.intercept-flash {
+  animation: intercept-flash 0.2s ease-in-out 4;
+}
+
+/* Selección de cartas */
+@keyframes card-select-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px #FF6A1A; }
+  50% { box-shadow: 0 0 12px 4px rgba(255, 106, 26, 0.6); }
+}
+
+/* Transición suave para notificaciones */
+@keyframes slide-in {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+
+.notification-enter {
+  animation: slide-in 0.25s ease-out forwards;
+}

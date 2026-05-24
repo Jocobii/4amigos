@@ -264,12 +264,10 @@ export interface ServerToClientEvents {
   ERROR: (payload: ErrorPayload) => void;
 }
 
-/** Eventos internos del servidor (para uso entre sockets) */
-export interface InterServerEvents {
-  ping: () => void;
-}
+/** Eventos inter-servidor (vacío, requerido por Socket.io) */
+export interface InterServerEvents {}
 
-/** Datos adjuntos a cada socket (se guardan en handshake.auth) */
+/** Datos adjuntos a cada socket (disponibles en todos los handlers) */
 export interface SocketData {
   playerId: string;
   playerName: string;

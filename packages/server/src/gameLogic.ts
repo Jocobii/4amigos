@@ -632,10 +632,9 @@ export function buildGameStateView(
         tableDown: [],
       };
 
-  // Vista de oponentes: sin mano, ciegas solo como placeholders
-  const opponents = state.players
+  const opponents: import('./types/game.js').PlayerView[] = state.players
     .filter(p => p.id !== forPlayerId)
-    .map(p => ({
+    .map((p): import('./types/game.js').PlayerView => ({
       id: p.id,
       name: p.name,
       avatarColor: p.avatarColor,
@@ -643,25 +642,25 @@ export function buildGameStateView(
       status: p.status,
       isConnected: p.isConnected,
       penaltyCount: p.penaltyCount,
-      handCount: p.hand.length,      // Solo el conteo
-      tableUp: p.tableUp,            // Visibles para todos
+      handCount: p.hand.length,
+      tableUp: p.tableUp,
       tableDownCount: p.tableDown.length,
       tableDown: p.tableDown.map((c): CardBack => ({ id: c.id, faceDown: true })),
     }));
 
   return {
+    roomId,
     phase: state.phase,
-    self,
-    opponents,
+    round: state.round,
+    currentPlayerId: currentPlayer?.id ?? '',
+    deckCount: state.deck.length,
     discardTopCard: state.discardPile.topCard,
     discardPileCount: state.discardPile.cards.length,
-    deckCount: state.deck.length,  // Solo el tamaño, no las cartas
-    currentPlayerId: currentPlayer.id,
     turnConstraint: state.turnConstraint,
     intercept: state.intercept,
-    round: state.round,
     finishOrder: state.finishOrder,
-    lastActivity: state.lastActivity,
-    roomId,
+    self,
+    opponents,
+    lastActivity: state.lastActivity.slice(-10),
   };
 }

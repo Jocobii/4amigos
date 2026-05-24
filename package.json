@@ -1,59 +1,37 @@
 {
-  "name": "@4amigos/server",
+  "name": "4amigos",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "engines": {
-    "node": ">=18"
-  },
   "scripts": {
-<<<<<<< Updated upstream
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc --project tsconfig.json",
-    "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "nanoid": "^5.0.9",
-    "socket.io": "^4.8.1"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.1",
-    "@types/node": "^20.17.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
-=======
     "dev": "next dev",
-    "dev:server": "cd packages/server && npx tsx watch src/server.ts",
+    "dev:server": "pnpm exec tsx watch packages/server/src/server.ts",
     "dev:all": "concurrently \"pnpm dev\" \"pnpm dev:server\"",
     "build": "next build",
-    "build:server": "cd packages/server && npx tsc",
+    "build:server": "pnpm --filter @4amigos/server build",
     "start": "next start",
-    "start:server": "cd packages/server && node dist/server.js",
+    "start:server": "pnpm --filter @4amigos/server start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "typecheck:server": "cd packages/server && npx tsc --noEmit"
+    "typecheck:server": "pnpm --filter @4amigos/server typecheck"
   },
   "dependencies": {
-    "next": "16.2.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "concurrently": "^9.1.2",
+    "next": "^16.2.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "socket.io-client": "^4.8.3",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "concurrently": "^9.1.2",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
->>>>>>> Stashed changes
+    "@tailwindcss/postcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "@types/node": "^20.19.41",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.2.6",
+    "postcss": "^8.5.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.9.3"
   }
 }

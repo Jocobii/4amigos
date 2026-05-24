@@ -228,10 +228,11 @@ function sanitizeName(raw: string): string {
 
 // ─────────────────────────── Debug ───────────────────────────────────────────
 
-export function getRoomStats(): { totalRooms: number; totalPlayers: number } {
-  let totalPlayers = 0;
-  for (const room of rooms.values()) {
-    totalPlayers += room.gameState.players.length;
-  }
-  return { totalRooms: rooms.size, totalPlayers };
+export function getRoomStats() {
+  return {
+    rooms: rooms.size,
+    players: [...rooms.values()].reduce(
+      (acc, r) => acc + r.gameState.players.length, 0
+    ),
+  };
 }
