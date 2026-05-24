@@ -1,0 +1,24 @@
+# ─── Dependencias instaladas (se instalan dentro del contenedor) ───────────────
+node_modules
+packages/*/node_modules
+
+# ─── Build outputs ────────────────────────────────────────────────────────────
+.next
+packages/server/dist
+*.tsbuildinfo
+
+# ─── Git y CI ─────────────────────────────────────────────────────────────────
+.git
+.gitignore
+
+# ─── Entorno local (nunca al contenedor) ──────────────────────────────────────
+.env
+.env.*
+.env.local
+
+# ─── Archivos del sistema ─────────────────────────────────────────────────────
+.DS_Store
+*.pem
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
