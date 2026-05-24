@@ -14,15 +14,30 @@ import { getSocket } from '@/src/shared/api/socket';
 import type { Card, CardBack, PlayerView, SelfView, ActivityEvent } from '@/src/shared/types/game';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// useIsMobile — detecta viewport < 640px
+// ─────────────────────────────────────────────────────────────────────────────
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // HUD Strip
 // ─────────────────────────────────────────────────────────────────────────────
 
-function HudStrip({ round, roomId, phase }: { round: number; roomId: string; phase: string }) {
+function HudStrip({ round, roomId, phase, isMobile }: { round: number; roomId: string; phase: string; isMobile?: boolean }) {
   return (
     <div style={{
       position: 'absolute', top: 0, left: 0, right: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '10px 16px', zIndex: 100,
+      padding: isMobile ? '7px 10px' : '10px 16px', zIndex: 100,
       background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%)',
     }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -30,8 +45,8 @@ function HudStrip({ round, roomId, phase }: { round: number; roomId: string; pha
         <Pill ghost>RONDA {round}</Pill>
       </div>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontFamily: 'Anton, sans-serif', fontSize: 22, color: '#FF6A1A', letterSpacing: 3 }}>4 AMIGOS</div>
-        <div style={{ fontSize: 9, color: 'rgba(246,239,222,0.4)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: 2 }}>— ROMPE AMISTADES —</div>
+        <div style={{ fontFamily: 'Anton, sans-serif', fontSize: isMobile ? 15 : 22, color: '#FF6A1A', letterSpacing: isMobile ? 2 : 3 }}>4 AMIGOS</div>
+        {!isMobile && <div style={{ fontSize: 9, color: 'rgba(246,239,222,0.4)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: 2 }}>— ROMPE AMISTADES —</div>}
       </div>
       <Pill ghost>{phase === 'lobby' ? 'LOBBY' : phase === 'playing' ? 'EN JUEGO' : 'TERMINADO'}</Pill>
     </div>
@@ -57,9 +72,11 @@ function Pill({ children, dot, ghost }: { children: React.ReactNode; dot?: boole
 // Activity Feed
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ActivityFeed({ items }: { items: ActivityEvent[] }) {
-  return (
-    <div style={{ position: 'absolute', left: 12, bottom: 200, zIndex: 50, width: 200 }}>
+function ActivityFeed({ items, isMobile }: { items: ActivityEvent[]; isMobile?: boolean }) {
+  const [showLog, setShowLog] = React.useState(false);
+
+  const logItems = (
+    <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF6A1A', display: 'inline-block' }} />
         <span style={{ fontSize: 9, fontFamily: 'JetBrains Mono, monospace', letterSpacing: 2, color: 'rgba(246,239,222,0.5)' }}>EN LA MESA</span>
@@ -79,6 +96,44 @@ function ActivityFeed({ items }: { items: ActivityEvent[] }) {
           </span>
         </div>
       ))}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <button
+          onClick={() => setShowLog(o => !o)}
+          style={{
+            position: 'absolute', bottom: 230, left: 8, zIndex: 155,
+            width: 36, height: 36, borderRadius: '50%',
+            background: showLog ? 'rgba(255,106,26,0.3)' : 'rgba(14,11,8,0.88)',
+            border: '1.5px solid rgba(255,106,26,0.5)',
+            fontSize: 16, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: showLog ? '0 0 12px rgba(255,106,26,0.5)' : 'none',
+            transition: 'all 0.2s',
+          }}
+        >
+          📋
+        </button>
+        {showLog && (
+          <div style={{
+            position: 'absolute', left: 8, bottom: 274, zIndex: 160, width: 200,
+            background: 'rgba(14,11,8,0.96)', border: '1px solid rgba(255,106,26,0.25)',
+            borderRadius: 10, padding: '10px 12px', backdropFilter: 'blur(14px)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.65)',
+          }}>
+            {logItems}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div style={{ position: 'absolute', left: 12, bottom: 200, zIndex: 50, width: 200 }}>
+      {logItems}
     </div>
   );
 }
@@ -87,13 +142,14 @@ function ActivityFeed({ items }: { items: ActivityEvent[] }) {
 // Opponent Corner
 // ─────────────────────────────────────────────────────────────────────────────
 
-function OpponentCorner({ player, isActive, position }: {
-  player: PlayerView; isActive: boolean; position: 'north' | 'west' | 'east';
+function OpponentCorner({ player, isActive, position, isMobile }: {
+  player: PlayerView; isActive: boolean; position: 'north' | 'west' | 'east'; isMobile?: boolean;
 }) {
+  const av = isMobile ? 36 : 52;
   const posStyle: Record<string, React.CSSProperties> = {
-    north: { top: 70, left: '50%', transform: 'translateX(-50%)' },
-    west:  { left: 12, top: '50%', transform: 'translateY(-50%)' },
-    east:  { right: 12, top: '50%', transform: 'translateY(-50%)' },
+    north: { top: isMobile ? 52 : 70, left: '50%', transform: 'translateX(-50%)' },
+    west:  { left: isMobile ? 4 : 12, top: '50%', transform: 'translateY(-50%)' },
+    east:  { right: isMobile ? 4 : 12, top: '50%', transform: 'translateY(-50%)' },
   };
 
   return (
@@ -112,9 +168,9 @@ function OpponentCorner({ player, isActive, position }: {
         }} />
       )}
       <div style={{
-        width: 52, height: 52, borderRadius: '50%', background: player.avatarColor,
+        width: av, height: av, borderRadius: '50%', background: player.avatarColor,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'Anton, sans-serif', fontSize: 20, color: '#0e0b08',
+        fontFamily: 'Anton, sans-serif', fontSize: isMobile ? 14 : 20, color: '#0e0b08',
         boxShadow: isActive
           ? `0 0 0 3px ${player.avatarColor}, 0 0 30px ${player.avatarColor}BB, 0 0 60px ${player.avatarColor}44`
           : '0 2px 8px rgba(0,0,0,0.5)',
@@ -126,16 +182,16 @@ function OpponentCorner({ player, isActive, position }: {
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{
-          fontFamily: 'Anton, sans-serif', fontSize: 12, letterSpacing: 1,
+          fontFamily: 'Anton, sans-serif', fontSize: isMobile ? 9 : 12, letterSpacing: 1,
           color: isActive ? player.avatarColor : '#f6efde',
           textShadow: isActive ? `0 0 10px ${player.avatarColor}` : 'none',
         }}>{player.name}</div>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'rgba(246,239,222,0.5)' }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: isMobile ? 8 : 10, color: 'rgba(246,239,222,0.5)' }}>
           {player.handCount} cartas
         </div>
       </div>
       {player.tableUp.length > 0 && (
-        <div style={{ display: 'flex', gap: 2 }}>
+        <div style={{ display: 'flex', gap: isMobile ? 1 : 2 }}>
           {player.tableUp.map(c => <CardFace key={c.id} card={c} size="small" />)}
         </div>
       )}
@@ -144,7 +200,7 @@ function OpponentCorner({ player, isActive, position }: {
           {player.tableDown.map(cb => <CardBackComponent key={cb.id} card={cb} size="small" />)}
         </div>
       )}
-      {isActive && (
+      {isActive && !isMobile && (
         <div style={{
           fontFamily: 'Anton, sans-serif', fontSize: 11,
           background: player.avatarColor, color: '#0e0b08',
@@ -404,7 +460,7 @@ function InviteLobbyPanel({ roomId, players, selfName, selfColor, currentPlayerI
     <div style={{
       position: 'absolute', top: '50%', left: '50%',
       transform: 'translate(-50%, -50%)',
-      zIndex: 35, width: 340,
+      zIndex: 35, width: 'min(340px, calc(100vw - 32px))',
       background: 'rgba(14,11,8,0.94)',
       border: '1px solid rgba(255,106,26,0.25)',
       borderRadius: 14, padding: '28px 28px 24px',
@@ -507,18 +563,18 @@ function InviteLobbyPanel({ roomId, players, selfName, selfColor, currentPlayerI
 // Center Table
 // ─────────────────────────────────────────────────────────────────────────────
 
-function CenterTable({ topCard, deckCount, pileCount, burnActive }: {
-  topCard: Card | null; deckCount: number; pileCount: number; burnActive: boolean;
+function CenterTable({ topCard, deckCount, pileCount, burnActive, isMobile }: {
+  topCard: Card | null; deckCount: number; pileCount: number; burnActive: boolean; isMobile?: boolean;
 }) {
   return (
     <div style={{
       position: 'absolute', left: '50%', top: '50%',
       transform: 'translate(-50%, -50%)',
-      display: 'flex', gap: 32, alignItems: 'center', zIndex: 30,
+      display: 'flex', gap: isMobile ? 14 : 32, alignItems: 'center', zIndex: 30,
     }}>
       {/* Mazo */}
       <div style={{ textAlign: 'center' }}>
-        <div style={{ position: 'relative', width: 88, height: 130 }}>
+        <div style={{ position: 'relative', width: isMobile ? 66 : 88, height: isMobile ? 98 : 130 }}>
           {deckCount > 2 && <div style={{ position: 'absolute', top: 4, left: 4 }}><CardBackComponent card={{ id: 'back3', faceDown: true }} size="hand" /></div>}
           {deckCount > 1 && <div style={{ position: 'absolute', top: 2, left: 2 }}><CardBackComponent card={{ id: 'back2', faceDown: true }} size="hand" /></div>}
           {deckCount > 0
@@ -535,7 +591,7 @@ function CenterTable({ topCard, deckCount, pileCount, burnActive }: {
       <div style={{ textAlign: 'center', position: 'relative' }}>
         <BurnFireCanvas active={burnActive} />
         <div style={{
-          width: 104, height: 152, borderRadius: 10,
+          width: isMobile ? 78 : 104, height: isMobile ? 114 : 152, borderRadius: 10,
           border: topCard ? '2px solid rgba(232,255,61,0.4)' : '2px dashed rgba(255,255,255,0.15)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: topCard ? '0 0 20px rgba(232,255,61,0.2)' : 'none',
@@ -556,9 +612,9 @@ function CenterTable({ topCard, deckCount, pileCount, burnActive }: {
 // Self Hand
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SelfHand({ self, selectedIds, onToggle, isMyTurn, onPlay, onTake, onStart, phase }: {
+function SelfHand({ self, selectedIds, onToggle, isMyTurn, onPlay, onTake, onStart, phase, isMobile }: {
   self: SelfView; selectedIds: string[]; onToggle: (id: string) => void;
-  isMyTurn: boolean; onPlay: () => void; onTake: () => void; onStart: () => void; phase: string;
+  isMyTurn: boolean; onPlay: () => void; onTake: () => void; onStart: () => void; phase: string; isMobile?: boolean;
 }) {
   const cards = self.hand;
   const total = cards.length;
@@ -570,7 +626,7 @@ function SelfHand({ self, selectedIds, onToggle, isMyTurn, onPlay, onTake, onSta
     <div style={{
       position: 'absolute', bottom: 0, left: 0, right: 0,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      paddingBottom: 16, zIndex: 50,
+      paddingBottom: isMobile ? 8 : 16, zIndex: 50,
       borderTop: isMyTurn && phase === 'playing' ? '2px solid rgba(232,255,61,0.5)' : '2px solid transparent',
       background: isMyTurn && phase === 'playing' ? 'linear-gradient(0deg, rgba(232,255,61,0.06) 0%, transparent 100%)' : 'transparent',
       transition: 'border-color 0.4s, background 0.4s',
@@ -608,16 +664,17 @@ function SelfHand({ self, selectedIds, onToggle, isMyTurn, onPlay, onTake, onSta
       )}
 
       {total > 0 && (
-        <div style={{ position: 'relative', height: 160, width: total * 64, marginBottom: 8 }}>
+        <div style={{ position: 'relative', height: isMobile ? 120 : 160, width: isMobile ? total * 48 : total * 64, marginBottom: 8 }}>
           {cards.map((card, i) => {
             const offset = i - mid;
             const rot = offset * 3.5;
             const yLift = Math.abs(offset) * 5;
             const isSel = selectedIds.includes(card.id);
+            const spread = isMobile ? 36 : 52;
             return (
               <div key={card.id} style={{
                 position: 'absolute', left: '50%',
-                transform: `translateX(calc(-50% + ${offset * 52}px)) translateY(${yLift + (isSel ? -24 : 0)}px) rotate(${rot}deg)`,
+                transform: `translateX(calc(-50% + ${offset * spread}px)) translateY(${yLift + (isSel ? -24 : 0)}px) rotate(${rot}deg)`,
                 zIndex: isSel ? 100 : 10 + i,
                 transition: 'transform 0.15s ease',
               }}>
@@ -823,7 +880,7 @@ const REACTION_LIST = [
   '🤦', '😭', '🥵', '👌', '🪵',
 ];
 
-function ReactionPanel() {
+function ReactionPanel({ isMobile }: { isMobile?: boolean }) {
   const gameView = useGameStore(s => s.gameView);
   const [open, setOpen] = React.useState(false);
 
@@ -835,7 +892,7 @@ function ReactionPanel() {
   };
 
   return (
-    <div style={{ position: 'absolute', bottom: 170, right: 16, zIndex: 150 }}>
+    <div style={{ position: 'absolute', bottom: isMobile ? 230 : 170, right: isMobile ? 8 : 16, zIndex: 150 }}>
       {open && (
         <div style={{
           position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
@@ -881,9 +938,9 @@ function ReactionPanel() {
 
 const TURN_SECONDS = 15;
 
-function TurnTimer({ turnStartedAt, currentPlayerId, myId, onTimeout, phase }: {
+function TurnTimer({ turnStartedAt, currentPlayerId, myId, onTimeout, phase, isMobile }: {
   turnStartedAt: number; currentPlayerId: string;
-  myId: string | null; onTimeout: () => void; phase: string;
+  myId: string | null; onTimeout: () => void; phase: string; isMobile?: boolean;
 }) {
   const [remaining, setRemaining] = React.useState(TURN_SECONDS);
   const timeoutFiredRef = useRef(false);
@@ -918,8 +975,11 @@ function TurnTimer({ turnStartedAt, currentPlayerId, myId, onTimeout, phase }: {
 
   return (
     <div style={{
-      position: 'absolute', top: '50%', right: 20,
-      transform: 'translateY(-50%)', zIndex: 60,
+      position: 'absolute',
+      ...(isMobile
+        ? { top: 50, left: '50%', transform: 'translateX(-50%)' }
+        : { top: '50%', right: 20, transform: 'translateY(-50%)' }),
+      zIndex: 60,
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
     }}>
       <svg width={56} height={56} viewBox="0 0 56 56">
@@ -978,7 +1038,7 @@ function GameEndScreen() {
         borderRadius: 16, padding: '48px 56px',
         boxShadow: isWinner ? '0 0 60px rgba(232,255,61,0.2)' : '0 20px 60px rgba(0,0,0,0.8)',
         animation: 'scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        maxWidth: 460, width: '100%',
+        maxWidth: 460, width: 'calc(100vw - 32px)',
       }}>
         {isWinner && (
           <div style={{ marginBottom: 8 }}>
@@ -1063,6 +1123,7 @@ export function GameBoard() {
   const interceptActive   = useGameStore(s => s.interceptActive);
   const selectedCardIds   = useGameStore(s => s.selectedCardIds);
   const toggleCardSelection = useGameStore(s => s.toggleCardSelection);
+  const isMobile          = useIsMobile();
 
   const { playSelected, takePile, flipBlind, startGame, isMyTurn } = usePlayCard();
   const { canIntercept, interceptTurn } = useIntercept();
@@ -1109,17 +1170,17 @@ export function GameBoard() {
         background: 'radial-gradient(ellipse 70% 50% at 50% 50%, transparent 30%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.85) 100%)',
       }} />
 
-      <HudStrip round={round} roomId={roomId} phase={phase} />
+      <HudStrip round={round} roomId={roomId} phase={phase} isMobile={isMobile} />
 
       {opponents.map((opp, i) => (
         <OpponentCorner key={opp.id} player={opp}
           isActive={gameView.currentPlayerId === opp.id}
-          position={POSITIONS[i % 3]!} />
+          position={POSITIONS[i % 3]!} isMobile={isMobile} />
       ))}
 
       {phase === 'lobby'
         ? <InviteLobbyPanel roomId={roomId} players={opponents} selfName={self?.name ?? ''} selfColor={self?.avatarColor ?? '#FF6A1A'} currentPlayerId={gameView.currentPlayerId} />
-        : <CenterTable topCard={discardTopCard} deckCount={deckCount} pileCount={discardPileCount} burnActive={burnActive} />
+        : <CenterTable topCard={discardTopCard} deckCount={deckCount} pileCount={discardPileCount} burnActive={burnActive} isMobile={isMobile} />
       }
 
       <SpecialCardEffect lastActivity={lastActivity} />
@@ -1130,16 +1191,16 @@ export function GameBoard() {
       {self && (
         <SelfHand self={self} selectedIds={selectedCardIds} onToggle={toggleCardSelection}
           isMyTurn={isMyTurn} onPlay={handlePlay} onTake={takePile}
-          onStart={startGame} phase={phase} />
+          onStart={startGame} phase={phase} isMobile={isMobile} />
       )}
 
       <TurnTimer turnStartedAt={turnStartedAt} currentPlayerId={gameView.currentPlayerId}
-        myId={socketId} phase={phase} onTimeout={takePile} />
+        myId={socketId} phase={phase} onTimeout={takePile} isMobile={isMobile} />
 
-      <ActivityFeed items={lastActivity} />
+      <ActivityFeed items={lastActivity} isMobile={isMobile} />
       <FloatingReactionsOverlay />
       <Notifications />
-      <ReactionPanel />
+      <ReactionPanel isMobile={isMobile} />
       <HowToPlay />
       <GameEndScreen />
 
