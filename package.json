@@ -2,6 +2,7 @@
   "name": "4amigos",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "next dev",
     "dev:server": "pnpm exec tsx watch packages/server/src/server.ts",
