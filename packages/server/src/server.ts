@@ -404,7 +404,7 @@ setInterval(purgeExpiredRooms, 30 * 60 * 1000);
 httpServer.listen(PORT, () => {
   console.log(`\n🃏  4 Amigos — Servidor autoritario`);
   console.log(`    Puerto : ${PORT}`);
-  console.log(`    Cliente: ${CLIENT_ORIGIN}`);
+  console.log(`    Cliente: ${rawOrigins}`);
   console.log(`    Modo   : ${process.env['NODE_ENV'] ?? 'development'}\n`);
 });
 
