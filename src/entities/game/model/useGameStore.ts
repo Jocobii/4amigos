@@ -23,22 +23,25 @@ interface Notification {
 }
 
 interface GameStore {
-  // ── Conexión ──────────────────────────────────────────────────────────────
+  // -- Conexion ---------------------------------------------------------------
   connectionStatus: ConnectionStatus;
   socketId: string | null;
 
-  // ── Sala / Partida ────────────────────────────────────────────────────────
+  // -- Sala / Partida ---------------------------------------------------------
   roomId: string | null;
   playerName: string | null;
   gameView: GameStateView | null;
   gameEnd: GameEndPayload | null;
 
-  // ── UI local ─────────────────────────────────────────────────────────────
+  // -- UI local ---------------------------------------------------------------
   selectedCardIds: string[];
   notifications: Notification[];
-  interceptFlash: boolean; // Parpadeo cuando la ventana de intercepción se abre
+  interceptFlash: boolean;
+  burnActive: boolean;
+  interceptActive: boolean;
+  lastSeenActivityId: string | null;
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  // -- Actions ----------------------------------------------------------------
   setConnectionStatus: (status: ConnectionStatus) => void;
   setSocketId: (id: string | null) => void;
   setRoom: (roomId: string, playerName: string) => void;
@@ -57,7 +60,7 @@ interface GameStore {
 let notifCounter = 0;
 
 export const useGameStore = create<GameStore>((set, get) => ({
-  // ── Estado inicial ────────────────────────────────────────────────────────
+  // -- Estado inicial ---------------------------------------------------------
   connectionStatus: 'disconnected',
   socketId: null,
   roomId: null,
@@ -67,8 +70,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   selectedCardIds: [],
   notifications: [],
   interceptFlash: false,
+  burnActive: false,
+  interceptActive: false,
+  lastSeenActivityId: null,
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  // -- Actions ----------------------------------------------------------------
   setConnectionStatus: (status) => set({ connectionStatus: status }),
   setSocketId: (id) => set({ socketId: id }),
 
@@ -79,15 +85,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const wasInterceptOpen = prev?.intercept.isOpen ?? false;
     const isInterceptOpen = view.intercept.isOpen;
 
+    const lastSeen = get().lastSeenActivityId;
+    const latestActivity = view.lastActivity[view.lastActivity.length - 1];
+    const isNewActivity = latestActivity && latestActivity.id !== lastSeen;
+
+    const hasBurn = isNewActivity && latestActivity?.kind === 'burn';
+    const hasIntercept = isNewActivity && latestActivity?.kind === 'intercept';
+
     set({
       gameView: view,
-      // Si la ventana de intercepción se abrió, activar flash
       interceptFlash: !wasInterceptOpen && isInterceptOpen,
+      lastSeenActivityId: latestActivity?.id ?? lastSeen,
+      ...(hasBurn && { burnActive: true }),
+      ...(hasIntercept && { interceptActive: true }),
     });
 
-    // Apagar flash tras 800ms
     if (!wasInterceptOpen && isInterceptOpen) {
       setTimeout(() => set({ interceptFlash: false }), 800);
+    }
+    if (hasBurn) {
+      setTimeout(() => set({ burnActive: false }), 1800);
+    }
+    if (hasIntercept) {
+      setTimeout(() => set({ interceptActive: false }), 1200);
     }
   },
 
@@ -99,7 +119,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } else if (result.penaltyApplied) {
       get().addNotification('warning', result.message);
     }
-    // Limpiar selección al jugar
     set({ selectedCardIds: [] });
   },
 
@@ -112,7 +131,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { selectedCardIds, gameView } = get();
     if (!gameView) return;
 
-    // Solo se pueden seleccionar cartas del mismo rango
     const isSelected = selectedCardIds.includes(cardId);
 
     if (isSelected) {
@@ -120,7 +138,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    // Verificar rango: si ya hay selección, el nuevo rango debe coincidir
     if (selectedCardIds.length > 0) {
       const hand = gameView.self?.hand ?? [];
       const tableUp = gameView.self?.tableUp ?? [];
@@ -130,7 +147,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const newCard = allCards.find(c => c.id === cardId);
 
       if (firstSelected && newCard && firstSelected.rank !== newCard.rank) {
-        // Rango diferente → reemplazar selección
         set({ selectedCardIds: [cardId] });
         return;
       }
@@ -142,7 +158,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   clearSelection: () => set({ selectedCardIds: [] }),
 
   addNotification: (type, message) => {
-    const id = `notif_${++notifCounter}`;
+    const id = 'notif_' + (++notifCounter);
     const notif: Notification = { id, type, message, timestamp: Date.now() };
     set(s => ({ notifications: [...s.notifications.slice(-4), notif] }));
     setTimeout(() => get().dismissNotification(id), 4000);
@@ -161,5 +177,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     selectedCardIds: [],
     notifications: [],
     interceptFlash: false,
+    burnActive: false,
+    interceptActive: false,
+    lastSeenActivityId: null,
   }),
 }));

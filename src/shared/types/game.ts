@@ -1,6 +1,6 @@
 // =============================================================================
 // 4 Amigos — Tipos compartidos (espejo del servidor)
-// Este archivo es idéntico a packages/server/src/types/game.ts
+// Este archivo es identico a packages/server/src/types/game.ts
 // NO importar desde el servidor — mantenerlo sincronizado manualmente.
 // =============================================================================
 
@@ -93,9 +93,10 @@ export interface GameStateView {
   finishOrder: string[];
   lastActivity: ActivityEvent[];
   roomId: string;
+  turnStartedAt: number;
 }
 
-// ── Payloads de Socket ────────────────────────────────────────────────────────
+// -- Payloads de Socket -------------------------------------------------------
 
 export interface JoinRoomPayload { roomId: string; playerName: string; }
 export interface PlayCardPayload { cardIds: string[]; }
@@ -126,6 +127,8 @@ export interface GameStartPayload {
 
 export interface GameEndPayload {
   finishOrder: Array<{ id: string; name: string; rank: number }>;
+  winnerId: string;
+  winnerName: string;
   loserId: string;
   loserName: string;
 }
@@ -139,6 +142,7 @@ export interface ClientToServerEvents {
   TAKE_PILE: () => void;
   FLIP_BLIND: (payload: FlipBlindPayload) => void;
   INTERCEPT_TURN: (payload: InterceptTurnPayload) => void;
+  RESTART_GAME: () => void;
 }
 
 export interface ServerToClientEvents {
@@ -147,5 +151,6 @@ export interface ServerToClientEvents {
   INTERCEPT_RESULT: (payload: InterceptResultPayload) => void;
   GAME_START: (payload: GameStartPayload) => void;
   GAME_END: (payload: GameEndPayload) => void;
+  GAME_RESTARTED: () => void;
   ERROR: (payload: ErrorPayload) => void;
 }

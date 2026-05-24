@@ -89,6 +89,7 @@ export function createInitialGameState(
     round: 1,
     finishOrder: [],
     lastActivity: [],
+    turnStartedAt: Date.now(),
   };
 }
 
@@ -174,6 +175,7 @@ function advanceTurn(state: GameState, fromPlayerIndex: number): void {
   }
   state.currentPlayerIndex = next;
   state.turnConstraint = 'normal';
+  state.turnStartedAt = Date.now();
 }
 
 /** Rellena la mano del jugador con cartas del mazo hasta 4 */
@@ -193,14 +195,12 @@ function checkFinished(player: Player, state: GameState): boolean {
     player.status = 'finished';
     state.finishOrder.push(player.id);
 
-    // ¿Quedó sólo 1 jugador activo? → ese es el shithead (último)
-    const activePlayers = state.players.filter(p => p.status === 'playing');
-    if (activePlayers.length <= 1) {
-      state.phase = 'finished';
-      if (activePlayers.length === 1) {
-        activePlayers[0]!.status = 'finished';
-        state.finishOrder.push(activePlayers[0]!.id);
-      }
+    // El primer jugador en terminar GANA — el juego para inmediatamente.
+    state.phase = 'finished';
+    const remaining = state.players.filter(p => p.status === 'playing');
+    for (const p of remaining) {
+      p.status = 'finished';
+      state.finishOrder.push(p.id);
     }
   }
 
@@ -662,5 +662,6 @@ export function buildGameStateView(
     self,
     opponents,
     lastActivity: state.lastActivity.slice(-10),
+    turnStartedAt: state.turnStartedAt,
   };
 }

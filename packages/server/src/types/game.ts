@@ -119,6 +119,8 @@ export interface GameState {
   /** Jugador que ya terminó, en orden de clasificación */
   finishOrder: string[];        // playerIds
   lastActivity: ActivityEvent[];
+  /** Timestamp (ms) de cuando empezo el turno actual */
+  turnStartedAt: number;
 }
 
 // ─────────────────────────── Estado de la sala (Room) ────────────────────────
@@ -153,6 +155,7 @@ export interface GameStateView {
   finishOrder: string[];
   lastActivity: ActivityEvent[];
   roomId: string;
+  turnStartedAt: number;
 }
 
 // ─────────────────────────── Eventos de actividad ─────────────────────────────
@@ -233,6 +236,8 @@ export interface GameStartPayload {
 
 export interface GameEndPayload {
   finishOrder: Array<{ id: string; name: string; rank: number }>;
+  winnerId: string;
+  winnerName: string;
   loserId: string;
   loserName: string;
 }
@@ -252,6 +257,7 @@ export interface ClientToServerEvents {
   TAKE_PILE: () => void;
   FLIP_BLIND: (payload: FlipBlindPayload) => void;
   INTERCEPT_TURN: (payload: InterceptTurnPayload) => void;
+  RESTART_GAME: () => void;
 }
 
 /** Eventos que el SERVIDOR emite al cliente */
@@ -261,6 +267,7 @@ export interface ServerToClientEvents {
   INTERCEPT_RESULT: (payload: InterceptResultPayload) => void;
   GAME_START: (payload: GameStartPayload) => void;
   GAME_END: (payload: GameEndPayload) => void;
+  GAME_RESTARTED: () => void;
   ERROR: (payload: ErrorPayload) => void;
 }
 

@@ -7,7 +7,7 @@ import { useGameStore } from '@/src/entities/game';
 export function useJoinRoom() {
   const [isLoading, setIsLoading] = useState(false);
   const { setRoom, setConnectionStatus, setSocketId, setGameView, setGameEnd,
-          handlePlayResult, handleInterceptResult, addNotification } = useGameStore();
+          handlePlayResult, handleInterceptResult, addNotification, reset } = useGameStore();
 
   const joinRoom = useCallback((roomId: string, playerName: string) => {
     setIsLoading(true);
@@ -15,12 +15,12 @@ export function useJoinRoom() {
 
     const socket = connectSocket();
 
-    // Registrar listeners una sola vez
     socket.off('connect');
     socket.off('disconnect');
     socket.off('ROOM_STATE');
     socket.off('GAME_START');
     socket.off('GAME_END');
+    socket.off('GAME_RESTARTED');
     socket.off('PLAY_RESULT');
     socket.off('INTERCEPT_RESULT');
     socket.off('ERROR');
@@ -34,7 +34,7 @@ export function useJoinRoom() {
 
     socket.on('disconnect', () => {
       setConnectionStatus('disconnected');
-      addNotification('warning', 'Conexión perdida. Reconectando...');
+      addNotification('warning', 'Conexion perdida. Reconectando...');
     });
 
     socket.on('ROOM_STATE', ({ view }) => {
@@ -43,11 +43,17 @@ export function useJoinRoom() {
     });
 
     socket.on('GAME_START', ({ roomId: rid }) => {
-      addNotification('info', `¡La partida en la sala ${rid} ha comenzado!`);
+      addNotification('info', 'La partida en la sala ' + rid + ' ha comenzado!');
     });
 
     socket.on('GAME_END', (payload) => {
       setGameEnd(payload);
+    });
+
+    socket.on('GAME_RESTARTED', () => {
+      reset();
+      addNotification('info', 'Nueva partida! Volviendo al lobby...');
+      socket.emit('JOIN_ROOM', { roomId: roomId.toUpperCase().trim(), playerName: playerName.trim() });
     });
 
     socket.on('PLAY_RESULT', (result) => {
@@ -70,7 +76,7 @@ export function useJoinRoom() {
       setIsLoading(false);
     }
   }, [setRoom, setConnectionStatus, setSocketId, setGameView, setGameEnd,
-      handlePlayResult, handleInterceptResult, addNotification]);
+      handlePlayResult, handleInterceptResult, addNotification, reset]);
 
   return { joinRoom, isLoading };
 }

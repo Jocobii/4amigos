@@ -49,6 +49,7 @@ export function joinRoom(
       round: 1,
       finishOrder: [],
       lastActivity: [],
+      turnStartedAt: 0,
     };
     room = { id: roomId, gameState: initialState, createdAt: now() };
     rooms.set(roomId, room);
@@ -224,6 +225,40 @@ function sanitizeName(raw: string): string {
     .replace(/[^\p{L}\p{N} _\-\.]/gu, '') // solo letras, números, guiones, puntos
     .trim()
     .slice(0, 20) || 'Jugador';
+}
+
+/** Reinicia una sala al lobby para una revancha (mantiene los mismos jugadores) */
+export function resetRoom(roomId: string): { ok: true } | { ok: false; error: string } {
+  const room = rooms.get(roomId);
+  if (!room) return { ok: false, error: 'Sala no encontrada' };
+
+  const freshState: GameState = {
+    phase: 'lobby',
+    players: room.gameState.players.map(p => ({
+      id: p.id,
+      name: p.name,
+      avatarColor: p.avatarColor,
+      hand: [],
+      tableUp: [],
+      tableDown: [],
+      status: 'waiting',
+      isConnected: p.isConnected,
+      seatIndex: p.seatIndex,
+      penaltyCount: 0,
+    })),
+    deck: [],
+    discardPile: { cards: [], topCard: null },
+    currentPlayerIndex: 0,
+    turnConstraint: 'normal',
+    intercept: { isOpen: false, activePlayerId: null, openedAt: null },
+    round: 1,
+    finishOrder: [],
+    lastActivity: [],
+    turnStartedAt: 0,
+  };
+
+  room.gameState = freshState;
+  return { ok: true };
 }
 
 // ─────────────────────────── Debug ───────────────────────────────────────────

@@ -28,6 +28,7 @@ import {
   buildRoomViews,
   purgeExpiredRooms,
   getRoomStats,
+  resetRoom,
 } from './roomManager.js';
 
 import {
@@ -84,6 +85,48 @@ const io = new Server<
   pingInterval: 15000,
 });
 
+// ─────────────────────────── Turn Timer (server-side enforcement) ─────────────
+
+const TURN_TIMEOUT_MS = 12_000;
+const roomTurnTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function resetTurnTimer(roomId: string): void {
+  const prev = roomTurnTimers.get(roomId);
+  if (prev) clearTimeout(prev);
+
+  const timer = setTimeout(() => {
+    const room = getRoom(roomId);
+    if (!room || room.gameState.phase !== 'playing') return;
+
+    const currentPlayer = room.gameState.players[room.gameState.currentPlayerIndex];
+    if (!currentPlayer) return;
+
+    console.log(`[Room ${roomId}] Tiempo agotado — auto-penalizando a ${currentPlayer.name}`);
+
+    const result = takePile(room.gameState, currentPlayer.id);
+    if (result.ok) {
+      io.to(currentPlayer.id).emit('PLAY_RESULT', {
+        success: true,
+        code: 'took_pile',
+        message: 'Tiempo agotado — recogiste el pozo',
+        penaltyApplied: true,
+      });
+      emitRoomState(roomId);
+      resetTurnTimer(roomId);
+    }
+  }, TURN_TIMEOUT_MS);
+
+  roomTurnTimers.set(roomId, timer);
+}
+
+function cancelTurnTimer(roomId: string): void {
+  const timer = roomTurnTimers.get(roomId);
+  if (timer) {
+    clearTimeout(timer);
+    roomTurnTimers.delete(roomId);
+  }
+}
+
 // ─────────────────────────── Helper: emitir estado sanitizado ─────────────────
 
 /**
@@ -98,6 +141,32 @@ function emitRoomState(roomId: string): void {
   for (const [playerId, view] of views.entries()) {
     io.to(playerId).emit('ROOM_STATE', { view });
   }
+}
+
+
+/** Emite el evento GAME_END a todos los jugadores de la sala con el resultado */
+function emitGameEnd(roomId: string): void {
+  const room = getRoom(roomId);
+  if (!room) return;
+
+  const players = room.gameState.players;
+  const ordered = room.gameState.finishOrder.map((id, idx) => {
+    const p = players.find(pl => pl.id === id);
+    return { id, name: p?.name ?? '?', rank: idx + 1 };
+  });
+
+  const winner = ordered[0];
+  const loser = ordered[ordered.length - 1];
+
+  io.to(roomId).emit('GAME_END', {
+    finishOrder: ordered,
+    winnerId: winner?.id ?? '',
+    winnerName: winner?.name ?? '?',
+    loserId: loser?.id ?? '',
+    loserName: loser?.name ?? '?',
+  });
+
+  console.log(`[Room ${roomId}] Fin de partida — Ganador: ${winner?.name} | Shithead: ${loser?.name}`);
 }
 
 // ─────────────────────────── Validación de entrada ───────────────────────────
@@ -172,6 +241,7 @@ io.on('connection', (socket) => {
         }));
         io.to(trimmedRoom).emit('GAME_START', { roomId: trimmedRoom, playerOrder });
         emitRoomState(trimmedRoom);
+        resetTurnTimer(trimmedRoom);
         console.log(`[Room ${trimmedRoom}] Partida iniciada automáticamente (sala llena)`);
       }
     }
@@ -218,6 +288,7 @@ io.on('connection', (socket) => {
 
     io.to(roomId).emit('GAME_START', { roomId, playerOrder });
     emitRoomState(roomId);
+    resetTurnTimer(roomId);
     console.log(`[Room ${roomId}] Partida iniciada manualmente`);
   });
 
@@ -258,20 +329,11 @@ io.on('connection', (socket) => {
 
     emitRoomState(roomId);
 
-    // Detectar fin de partida
     if (result.gameOver || room.gameState.phase === 'finished') {
-      const players = room.gameState.players;
-      const ordered = room.gameState.finishOrder.map((id, idx) => {
-        const p = players.find(pl => pl.id === id);
-        return { id, name: p?.name ?? '?', rank: idx + 1 };
-      });
-      const loser = ordered[ordered.length - 1];
-      io.to(roomId).emit('GAME_END', {
-        finishOrder: ordered,
-        loserId: loser?.id ?? '',
-        loserName: loser?.name ?? '?',
-      });
-      console.log(`[Room ${roomId}] Partida terminada. Shithead: ${loser?.name}`);
+      cancelTurnTimer(roomId);
+      emitGameEnd(roomId);
+    } else {
+      resetTurnTimer(roomId);
     }
   });
 
@@ -332,6 +394,13 @@ io.on('connection', (socket) => {
 
     socket.emit('PLAY_RESULT', { success: true, code: 'ok', message: 'Carta ciega volteada' });
     emitRoomState(roomId);
+
+    if (result.gameOver || room.gameState.phase === 'finished') {
+      cancelTurnTimer(roomId);
+      emitGameEnd(roomId);
+    } else {
+      resetTurnTimer(roomId);
+    }
   });
 
   // ── INTERCEPT_TURN ─────────────────────────────────────────────────────────
@@ -381,7 +450,25 @@ io.on('connection', (socket) => {
     });
 
     emitRoomState(roomId);
-    console.log(`[Room ${roomId}] Intercepción exitosa por ${interceptorName}`);
+    resetTurnTimer(roomId);
+    console.log(`[Room ${roomId}] Intercepcion exitosa por ${interceptorName}`);
+  });
+
+  // ── RESTART_GAME ─────────────────────────────────────────────────────────────
+  socket.on('RESTART_GAME', () => {
+    const roomId = socket.data.roomId;
+    if (!roomId) return;
+
+    const result = resetRoom(roomId);
+    if (!result.ok) {
+      socket.emit('ERROR', { code: 'restart_failed', message: result.error });
+      return;
+    }
+
+    cancelTurnTimer(roomId);
+    io.to(roomId).emit('GAME_RESTARTED');
+    emitRoomState(roomId);
+    console.log(`[Room ${roomId}] Partida reiniciada`);
   });
 
   // ── DISCONNECT ─────────────────────────────────────────────────────────────
@@ -402,7 +489,7 @@ setInterval(purgeExpiredRooms, 30 * 60 * 1000);
 // ─────────────────────────── Arranque ────────────────────────────────────────
 
 httpServer.listen(PORT, () => {
-  console.log(`\n🃏  4 Amigos — Servidor autoritario`);
+  console.log(`\n[4 Amigos] — Servidor autoritario`);
   console.log(`    Puerto : ${PORT}`);
   console.log(`    Cliente: ${rawOrigins}`);
   console.log(`    Modo   : ${process.env['NODE_ENV'] ?? 'development'}\n`);
