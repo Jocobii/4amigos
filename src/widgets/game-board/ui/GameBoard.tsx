@@ -147,7 +147,7 @@ function OpponentCorner({ player, isActive, position, isMobile }: {
 }) {
   const av = isMobile ? 36 : 52;
   const posStyle: Record<string, React.CSSProperties> = {
-    north: { top: isMobile ? 52 : 70, left: '50%', transform: 'translateX(-50%)' },
+    north: { top: isMobile ? 44 : 70, left: '50%', transform: 'translateX(-50%)' },
     west:  { left: isMobile ? 4 : 12, top: '50%', transform: 'translateY(-50%)' },
     east:  { right: isMobile ? 4 : 12, top: '50%', transform: 'translateY(-50%)' },
   };
@@ -664,13 +664,16 @@ function SelfHand({ self, selectedIds, onToggle, isMyTurn, onPlay, onTake, onSta
       )}
 
       {total > 0 && (
-        <div style={{ position: 'relative', height: isMobile ? 120 : 160, width: isMobile ? total * 48 : total * 64, marginBottom: 8 }}>
+        <div style={{ position: 'relative', height: isMobile ? 120 : 160, width: isMobile ? total * 48 : total * 64, marginBottom: 8, maxWidth: 'calc(100vw - 20px)' }}>
           {cards.map((card, i) => {
             const offset = i - mid;
             const rot = offset * 3.5;
             const yLift = Math.abs(offset) * 5;
             const isSel = selectedIds.includes(card.id);
-            const spread = isMobile ? 36 : 52;
+            // Spread cards dynamically — never overflow the viewport
+            const maxFanPx = typeof window !== 'undefined' ? window.innerWidth - 24 : (isMobile ? 360 : 560);
+            const cardPx   = isMobile ? 72 : 88;   // approx card width
+            const spread   = total <= 1 ? 0 : Math.min(isMobile ? 38 : 52, (maxFanPx - cardPx) / Math.max(total - 1, 1));
             return (
               <div key={card.id} style={{
                 position: 'absolute', left: '50%',
@@ -944,6 +947,9 @@ function TurnTimer({ turnStartedAt, currentPlayerId, myId, onTimeout, phase, isM
 }) {
   const [remaining, setRemaining] = React.useState(TURN_SECONDS);
   const timeoutFiredRef = useRef(false);
+  // Keep onTimeout in a ref so effect deps don't include it (prevents spurious re-runs)
+  const onTimeoutRef = useRef(onTimeout);
+  onTimeoutRef.current = onTimeout;
 
   useEffect(() => {
     if (phase !== 'playing' || !turnStartedAt) return;
@@ -955,14 +961,16 @@ function TurnTimer({ turnStartedAt, currentPlayerId, myId, onTimeout, phase, isM
       setRemaining(rem);
       if (rem <= 0 && !timeoutFiredRef.current && currentPlayerId === myId) {
         timeoutFiredRef.current = true;
-        onTimeout();
+        onTimeoutRef.current();
       }
     };
 
     update();
     const interval = setInterval(update, 100);
     return () => clearInterval(interval);
-  }, [turnStartedAt, currentPlayerId, myId, onTimeout, phase]);
+  // onTimeout intentionally excluded — stored in ref to avoid stale-closure re-runs
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnStartedAt, currentPlayerId, myId, phase]);
 
   if (phase !== 'playing' || !turnStartedAt) return null;
 
@@ -977,12 +985,12 @@ function TurnTimer({ turnStartedAt, currentPlayerId, myId, onTimeout, phase, isM
     <div style={{
       position: 'absolute',
       ...(isMobile
-        ? { top: 50, left: '50%', transform: 'translateX(-50%)' }
+        ? { top: 44, right: 8, transform: 'none' }
         : { top: '50%', right: 20, transform: 'translateY(-50%)' }),
       zIndex: 60,
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
     }}>
-      <svg width={56} height={56} viewBox="0 0 56 56">
+      <svg width={isMobile ? 46 : 56} height={isMobile ? 46 : 56} viewBox="0 0 56 56">
         <circle cx={28} cy={28} r={radius} fill="rgba(14,11,8,0.85)" stroke="rgba(255,255,255,0.08)" strokeWidth={3} />
         <circle
           cx={28} cy={28} r={radius} fill="none"

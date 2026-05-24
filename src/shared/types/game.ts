@@ -94,6 +94,8 @@ export interface GameStateView {
   lastActivity: ActivityEvent[];
   roomId: string;
   turnStartedAt: number;
+  /** Server's Date.now() at view build time — for clock-skew correction */
+  serverNow: number;
 }
 
 

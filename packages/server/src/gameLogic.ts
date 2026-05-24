@@ -663,5 +663,6 @@ export function buildGameStateView(
     opponents,
     lastActivity: state.lastActivity.slice(-10),
     turnStartedAt: state.turnStartedAt,
+    serverNow: Date.now(),
   };
 }

@@ -39,7 +39,15 @@ export function useJoinRoom() {
     });
 
     socket.on('ROOM_STATE', ({ view }) => {
-      setGameView(view);
+      // Clock-skew correction: convert server-relative turnStartedAt to local clock.
+      // serverElapsedMs = how many ms ago the server started this turn.
+      // clientAdjustedStart = what client's Date.now() would be for that same moment.
+      const serverElapsedMs = Math.max(0, view.serverNow - view.turnStartedAt);
+      const adjustedView = {
+        ...view,
+        turnStartedAt: Date.now() - serverElapsedMs,
+      };
+      setGameView(adjustedView);
       setRoom(view.roomId, playerName.trim());
     });
 
