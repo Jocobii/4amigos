@@ -49,126 +49,47 @@ const SUIT_KEYS = ['oros', 'copas', 'espadas', 'bastos'] as const;
 const RANK_POOL = ['3','4','5','6','7','8','9','Q','J','K'];
 const SUIT_COLORS = { oros: '#E8FF3D', copas: '#FF2244', espadas: '#9DE5FF', bastos: '#FF6A1A' };
 
-// ─── REACTIONS (animated SVG icons) ──────────────────────────────────────────
+// ─── TWEMOJI — high-quality SVG emoji from CDN ───────────────────────────────
+// Uses the official Twemoji CDN (Twitter/X, open source MIT + CC-BY 4.0)
 
-const REACTIONS_SVG: Record<string, React.ReactNode> = {
-  clown: (
-    <svg viewBox="0 0 32 32">
-      <circle cx="16" cy="18" r="11" fill="#FFE8C7"/>
-      <circle cx="16" cy="11" r="5" fill="#FF2244"/>
-      <circle cx="11" cy="17" r="2" fill="#0E0B08"/>
-      <circle cx="21" cy="17" r="2" fill="#0E0B08"/>
-      <circle cx="16" cy="22" r="2" fill="#FF2244"/>
-      <path d="M11 26 Q16 29 21 26" stroke="#0E0B08" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
-    </svg>
-  ),
-  skull: (
-    <svg viewBox="0 0 32 32">
-      <path d="M16 4 C 8 4 5 10 5 16 c0 5 3 8 5 9 v4 h4 v-3 h4 v3 h4 v-4 c2 -1 5 -4 5 -9 c0 -6 -3 -12 -11 -12 Z" fill="#F2F0E8"/>
-      <circle cx="11" cy="16" r="3" fill="#0E0B08"/>
-      <circle cx="21" cy="16" r="3" fill="#0E0B08"/>
-      <path d="M14 22 l1 -2 l1 2 l1 -2 l1 2" stroke="#0E0B08" strokeWidth="1.5" fill="none"/>
-    </svg>
-  ),
-  fire: (
-    <svg viewBox="0 0 32 32">
-      <path d="M8 22 C 6 16 12 14 11 8 C 16 12 18 6 20 4 C 21 10 25 12 25 18 C 25 24 21 28 16 28 C 11 28 9 26 8 22 Z" fill="#FF6A1A"/>
-      <path d="M13 22 C 12 19 16 17 15 14 C 18 17 20 14 20 18 C 20 22 18 25 16 25 C 14 25 13 24 13 22 Z" fill="#E8FF3D"/>
-    </svg>
-  ),
-  zzz: (
-    <svg viewBox="0 0 32 32">
-      <text x="6"  y="14" fontFamily="Anton,Impact,sans-serif" fontSize="11" fill="#9DE5FF">Z</text>
-      <text x="13" y="22" fontFamily="Anton,Impact,sans-serif" fontSize="13" fill="#9DE5FF">Z</text>
-      <text x="20" y="30" fontFamily="Anton,Impact,sans-serif" fontSize="15" fill="#9DE5FF">Z</text>
-    </svg>
-  ),
-  // ── Burlones extra ────────────────────────────────────────────────────────
-  laugh: (
-    <svg viewBox="0 0 32 32">
-      <circle cx="16" cy="16" r="13" fill="#E8FF3D"/>
-      <circle cx="11" cy="13" r="2.5" fill="#0E0B08"/>
-      <circle cx="21" cy="13" r="2.5" fill="#0E0B08"/>
-      <path d="M8 19 Q16 28 24 19" fill="#FF2244" stroke="#0E0B08" strokeWidth="1.4"/>
-      <path d="M8 19 Q16 24 24 19" fill="#f6efde"/>
-      <path d="M10 19 l14 0" stroke="#0E0B08" strokeWidth="1" fill="none"/>
-      {/* tears */}
-      <ellipse cx="7" cy="17" rx="2" ry="3" fill="#9DE5FF" opacity="0.85"/>
-      <ellipse cx="25" cy="17" rx="2" ry="3" fill="#9DE5FF" opacity="0.85"/>
-    </svg>
-  ),
-  thumbdown: (
-    <svg viewBox="0 0 32 32">
-      <path d="M18 28 l-4 0 c-1 0 -2 -1 -2 -2 l0 -8 l-5 0 c-1.5 0 -2.5 -1 -2 -2.5 l3 -10 c0.4 -1 1.2 -1.5 2 -1.5 l10 0 l0 11" fill="#FF6A1A" stroke="#0E0B08" strokeWidth="1.5" strokeLinejoin="round"/>
-      <rect x="20" y="6" width="5" height="13" rx="2" fill="#FF2244" stroke="#0E0B08" strokeWidth="1.5"/>
-    </svg>
-  ),
-  snail: (
-    <svg viewBox="0 0 32 32">
-      {/* shell */}
-      <circle cx="20" cy="16" r="8" fill="#FF6A1A" stroke="#0E0B08" strokeWidth="1.5"/>
-      <path d="M20 10 a6 6 0 0 1 0 12 a4 4 0 0 1 0 -8 a2 2 0 0 1 0 4" fill="none" stroke="#0E0B08" strokeWidth="1.2"/>
-      {/* body */}
-      <path d="M12 20 Q6 20 5 23 Q4 26 8 26 l10 0" fill="#E8FF3D" stroke="#0E0B08" strokeWidth="1.5" strokeLinejoin="round"/>
-      {/* antennae */}
-      <line x1="8" y1="20" x2="6" y2="16" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="11" y1="19" x2="10" y2="15" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="6" cy="15" r="1.5" fill="#0E0B08"/>
-      <circle cx="10" cy="14" r="1.5" fill="#0E0B08"/>
-    </svg>
-  ),
-  poop: (
-    <svg viewBox="0 0 32 32">
-      <ellipse cx="16" cy="24" rx="9" ry="5" fill="#6B3E11" stroke="#0E0B08" strokeWidth="1.2"/>
-      <ellipse cx="16" cy="20" rx="7" ry="4.5" fill="#7B4A1A" stroke="#0E0B08" strokeWidth="1.2"/>
-      <ellipse cx="16" cy="16.5" rx="5.5" ry="4" fill="#8B5A2A" stroke="#0E0B08" strokeWidth="1.2"/>
-      <path d="M13 10 Q16 4 19 10" fill="#9B6A3A" stroke="#0E0B08" strokeWidth="1.2"/>
-      {/* eyes */}
-      <circle cx="13.5" cy="16" r="1.5" fill="#0E0B08"/>
-      <circle cx="18.5" cy="16" r="1.5" fill="#0E0B08"/>
-      {/* smile */}
-      <path d="M13 19 Q16 21.5 19 19" fill="none" stroke="#0E0B08" strokeWidth="1.2" strokeLinecap="round"/>
-    </svg>
-  ),
-  banana: (
-    <svg viewBox="0 0 32 32">
-      {/* banana peel on floor */}
-      <path d="M4 26 Q10 18 20 20" fill="#E8FF3D" stroke="#0E0B08" strokeWidth="1.5"/>
-      <path d="M6 28 Q12 22 22 24" fill="#E8FF3D" stroke="#0E0B08" strokeWidth="1.5"/>
-      {/* stick figure falling */}
-      <circle cx="24" cy="8" r="3" fill="#f6efde" stroke="#0E0B08" strokeWidth="1.2"/>
-      <line x1="24" y1="11" x2="22" y2="18" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="22" y1="14" x2="18" y2="12" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="22" y1="14" x2="27" y2="13" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="22" y1="18" x2="18" y2="23" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
-      <line x1="22" y1="18" x2="26" y2="22" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  ),
-  eyes: (
-    <svg viewBox="0 0 32 32">
-      {/* shifty side-eye */}
-      <ellipse cx="10" cy="16" rx="7" ry="6" fill="white" stroke="#0E0B08" strokeWidth="1.5"/>
-      <ellipse cx="22" cy="16" rx="7" ry="6" fill="white" stroke="#0E0B08" strokeWidth="1.5"/>
-      <circle cx="13" cy="16" r="3.5" fill="#0E0B08"/>
-      <circle cx="25" cy="16" r="3.5" fill="#0E0B08"/>
-      <circle cx="14" cy="15" r="1.2" fill="white"/>
-      <circle cx="26" cy="15" r="1.2" fill="white"/>
-    </svg>
-  ),
-};
+function TwEmoji({ emoji, size = 28 }: { emoji: string; size?: number }) {
+  // Build the codepoint string (handles emoji with ZWJ/variation selectors)
+  const cp = [...emoji]
+    .map(c => c.codePointAt(0)?.toString(16).padStart(4, '0'))
+    .filter(Boolean)
+    .join('-')
+    .replace(/-fe0f/g, ''); // strip variation selectors that Twemoji omits
+  return (
+    <img
+      src={`https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${cp}.svg`}
+      alt={emoji}
+      width={size}
+      height={size}
+      draggable={false}
+      style={{ display: 'block', objectFit: 'contain', imageRendering: 'crisp-edges' }}
+    />
+  );
+}
+
+// ─── REACTIONS META (Twemoji-powered) ────────────────────────────────────────
 
 const REACTIONS_META = [
-  { key: 'clown',     label: 'PAYASO'  },
-  { key: 'skull',     label: 'CRÁNEO'  },
-  { key: 'fire',      label: 'FUEGO'   },
-  { key: 'zzz',       label: 'DORMIDO' },
-  { key: 'laugh',     label: 'JAJAJA'  },
-  { key: 'thumbdown', label: 'MALO'    },
-  { key: 'snail',     label: 'LENTO'   },
-  { key: 'poop',      label: 'CACA'    },
-  { key: 'banana',    label: 'RESBALA' },
-  { key: 'eyes',      label: 'OJITOS'  },
+  { key: 'clown',     label: 'PAYASO',  emoji: '🤡' },
+  { key: 'skull',     label: 'CRÁNEO',  emoji: '💀' },
+  { key: 'fire',      label: 'FUEGO',   emoji: '🔥' },
+  { key: 'zzz',       label: 'DORMIDO', emoji: '😴' },
+  { key: 'laugh',     label: 'JAJAJA',  emoji: '😂' },
+  { key: 'thumbdown', label: 'MALO',    emoji: '👎' },
+  { key: 'snail',     label: 'LENTO',   emoji: '🐌' },
+  { key: 'poop',      label: 'CACA',    emoji: '💩' },
+  { key: 'banana',    label: 'RESBALA', emoji: '🍌' },
+  { key: 'eyes',      label: 'OJITOS',  emoji: '👀' },
 ];
+
+// Helper: get emoji char for a reaction key
+function reactionEmoji(key: string): string {
+  return REACTIONS_META.find(r => r.key === key)?.emoji ?? '❓';
+}
 
 interface FloatingReact { id: string; kind: string; x: number; y: number; drift: number; }
 
@@ -176,7 +97,9 @@ function ReactionFloater({ kind, x, y, drift, onDone }: FloatingReact & { onDone
   useEffect(() => { const t = setTimeout(onDone, 1800); return () => clearTimeout(t); }, [onDone]);
   return (
     <div className="reaction-float" style={{ left: x, top: y, '--drift': `${drift}px` } as React.CSSProperties}>
-      <div className="reaction-float-svg">{REACTIONS_SVG[kind]}</div>
+      <div className="reaction-float-svg">
+        <TwEmoji emoji={reactionEmoji(kind)} size={36} />
+      </div>
     </div>
   );
 }
@@ -533,13 +456,12 @@ function ActivityFeed({ items }: { items: ActivityEvent[] }) {
 // ─── PlayerCorner ─────────────────────────────────────────────────────────────
 
 function PlayerCorner({
-  player, active, remaining, total, position, isMe, onReact, lastReaction,
+  player, active, remaining, total, position, isMe, lastReaction,
 }: {
   player: { id: string; name: string; avatarColor: string; handCount?: number };
   active: boolean; remaining: number; total: number;
   position: 'north' | 'south' | 'west' | 'east';
   isMe?: boolean;
-  onReact?: (playerId: string, kind: string) => void;
   lastReaction?: { id: number; kind: string } | null;
 }) {
   const cardCount = (player as PlayerView).handCount ?? 0;
@@ -560,21 +482,10 @@ function PlayerCorner({
         <div className="player-meta">
           <div className="player-name">{player.name}</div>
         </div>
-        {!isMe && onReact && (
-          <div className="react-rail">
-            {REACTIONS_META.map(r => (
-              <button key={r.key} className="react-btn" title={r.label}
-                      onClick={() => onReact(player.id, r.key)}
-                      aria-label={`${r.label} a ${player.name}`}>
-                <div className="react-btn-svg">{REACTIONS_SVG[r.key]}</div>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
       {lastReaction && (
         <div key={lastReaction.id} className="player-last-react">
-          {REACTIONS_SVG[lastReaction.kind]}
+          <TwEmoji emoji={reactionEmoji(lastReaction.kind)} size={40} />
         </div>
       )}
     </div>
@@ -865,6 +776,89 @@ function SelfTableCards({ self, selectedIds, onToggle, isMyTurn, onPlay }: {
   }
 
   return null;
+}
+
+// ─── SelfReactionBar — panel de reacciones en la zona del jugador ────────────
+
+function SelfReactionBar({ opponents, onReact }: {
+  opponents: { id: string; name: string; avatarColor: string }[];
+  onReact: (playerId: string, kind: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [targetId, setTargetId] = useState<string | null>(null);
+
+  // Si hay solo un oponente, se selecciona automáticamente
+  const effectiveTarget = targetId ?? (opponents.length === 1 ? opponents[0]?.id ?? null : null);
+
+  const handleReact = (key: string) => {
+    if (!effectiveTarget) return;
+    onReact(effectiveTarget, key);
+    setOpen(false);
+    setTargetId(null);
+  };
+
+  if (opponents.length === 0) return null;
+
+  return (
+    <div className="self-reaction-bar">
+      {/* Tray: se abre hacia arriba */}
+      {open && (
+        <div className="reaction-tray">
+          {/* Selector de objetivo — solo si hay más de 1 oponente */}
+          {opponents.length > 1 && (
+            <div className="reaction-targets">
+              <div className="reaction-targets-label">¿A quién?</div>
+              <div className="reaction-targets-row">
+                {opponents.map(opp => (
+                  <button
+                    key={opp.id}
+                    className={`reaction-target-btn${effectiveTarget === opp.id ? ' reaction-target-active' : ''}`}
+                    onClick={() => setTargetId(prev => prev === opp.id ? null : opp.id)}
+                    style={{ '--target-color': opp.avatarColor } as React.CSSProperties}
+                  >
+                    <div className="reaction-target-avatar" style={{ background: opp.avatarColor }}>
+                      {opp.name[0]}
+                    </div>
+                    <span className="reaction-target-name">{opp.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Grid de reacciones */}
+          <div className={`reaction-grid${!effectiveTarget ? ' reaction-grid-locked' : ''}`}>
+            {REACTIONS_META.map(r => (
+              <button
+                key={r.key}
+                className="self-react-btn"
+                title={r.label}
+                disabled={!effectiveTarget}
+                onClick={() => handleReact(r.key)}
+                aria-label={`${r.label}`}
+              >
+                <TwEmoji emoji={r.emoji} size={30} />
+                <span className="self-react-label">{r.label}</span>
+              </button>
+            ))}
+          </div>
+          {opponents.length > 1 && !effectiveTarget && (
+            <div className="reaction-pick-hint">↑ Selecciona a quién</div>
+          )}
+        </div>
+      )}
+
+      {/* Botón toggle */}
+      <button
+        className={`reaction-toggle-btn${open ? ' reaction-toggle-open' : ''}`}
+        onClick={() => { setOpen(o => !o); setTargetId(null); }}
+        aria-label="Panel de reacciones"
+      >
+        <TwEmoji emoji="💬" size={18} />
+        <span>REACCIONAR</span>
+        <span className="reaction-toggle-arrow">{open ? '▾' : '▴'}</span>
+      </button>
+    </div>
+  );
 }
 
 // ─── InviteLobbyPanel ─────────────────────────────────────────────────────────
@@ -1240,7 +1234,6 @@ export function GameBoard() {
                       active={currentPlayerId === opp.id}
                       remaining={timerRemaining} total={TURN_SECONDS}
                       position={POSITIONS[i % 3]!}
-                      onReact={onReact}
                       lastReaction={lastReacts[opp.id] ?? null} />
       ))}
 
@@ -1286,6 +1279,10 @@ export function GameBoard() {
                   <div className="me-turn-badge-time">{Math.ceil(timerRemaining)}s restantes</div>
                 </div>
               </div>
+            )}
+            {/* Panel de reacciones — siempre en tu zona */}
+            {phase === 'playing' && opponents.length > 0 && (
+              <SelfReactionBar opponents={opponents} onReact={onReact} />
             )}
           </div>
 

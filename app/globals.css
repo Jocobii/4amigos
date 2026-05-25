@@ -280,12 +280,13 @@ html, body {
 
 .player-last-react {
   position: absolute; top: -6px; right: -10px;
-  width: 32px; height: 32px; background: var(--ink);
+  width: 42px; height: 42px; background: var(--ink);
   border: 2px solid var(--accent-secondary); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   animation: react-pop .4s cubic-bezier(.3,1.4,.5,1); z-index: 5;
+  overflow: hidden; padding: 4px;
 }
-.player-last-react svg { width: 20px; height: 20px; }
+.player-last-react img { width: 100%; height: 100%; object-fit: contain; }
 @keyframes react-pop {
   0%   { transform: scale(0) rotate(-30deg); }
   60%  { transform: scale(1.2) rotate(8deg); }
@@ -1464,3 +1465,187 @@ html, body {
   55%     { transform: scale(1);    opacity: .55; }
   70%     { transform: scale(1.15); opacity: .75; }
 }
+
+/* ─── SELF REACTION BAR ───────────────────────────────── */
+/* Panel de reacciones en la zona del jugador (sur)        */
+
+.self-reaction-bar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+/* Botón toggle */
+.reaction-toggle-btn {
+  appearance: none;
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,.06);
+  border: 1.5px solid rgba(255,255,255,.14);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 11px; letter-spacing: 2px;
+  color: rgba(246,239,222,.65);
+  transition: all .15s;
+  white-space: nowrap;
+}
+.reaction-toggle-btn:hover {
+  background: rgba(255,106,26,.14);
+  border-color: rgba(255,106,26,.45);
+  color: var(--accent-primary);
+}
+.reaction-toggle-btn.reaction-toggle-open {
+  background: rgba(232,255,61,.1);
+  border-color: rgba(232,255,61,.4);
+  color: var(--accent-secondary);
+}
+.reaction-toggle-arrow {
+  font-size: 10px;
+  opacity: .7;
+}
+
+/* Tray — aparece hacia arriba */
+.reaction-tray {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 200;
+  background: rgba(14,11,8,.96);
+  border: 1.5px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -12px 36px rgba(0,0,0,.65);
+  animation: tray-slide-up .18s ease-out;
+  min-width: 220px;
+}
+@keyframes tray-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Sección de targets (multi-oponente) */
+.reaction-targets {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.reaction-targets-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 2px;
+  color: rgba(246,239,222,.35);
+  margin-bottom: 7px;
+  text-transform: uppercase;
+}
+.reaction-targets-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.reaction-target-btn {
+  appearance: none;
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px 5px 5px;
+  background: rgba(255,255,255,.05);
+  border: 1.5px solid rgba(255,255,255,.1);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(246,239,222,.6);
+  transition: all .15s;
+}
+.reaction-target-btn:hover {
+  border-color: var(--target-color, var(--accent-primary));
+  color: var(--paper);
+}
+.reaction-target-btn.reaction-target-active {
+  background: color-mix(in srgb, var(--target-color, var(--accent-primary)) 22%, transparent);
+  border-color: var(--target-color, var(--accent-primary));
+  color: var(--paper);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--target-color, var(--accent-primary)) 40%, transparent);
+}
+.reaction-target-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Anton', sans-serif; font-size: 11px;
+  color: var(--ink); flex-shrink: 0;
+}
+.reaction-target-name {
+  font-size: 11px;
+  max-width: 70px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Grid de reacciones */
+.reaction-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  transition: opacity .15s;
+}
+.reaction-grid.reaction-grid-locked {
+  opacity: .35;
+  pointer-events: none;
+}
+
+.self-react-btn {
+  appearance: none;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 7px 4px 5px;
+  background: rgba(255,255,255,.05);
+  border: 1.5px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .12s;
+}
+.self-react-btn:hover:not(:disabled) {
+  background: rgba(255,106,26,.18);
+  border-color: rgba(255,106,26,.5);
+  transform: scale(1.12) translateY(-2px);
+}
+.self-react-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.self-react-btn:disabled {
+  cursor: not-allowed;
+}
+.self-react-btn img {
+  display: block;
+  /* nice bounce animation on hover */
+}
+.self-react-btn:hover:not(:disabled) img {
+  animation: react-bounce .3s cubic-bezier(.3,1.5,.5,1);
+}
+@keyframes react-bounce {
+  0%   { transform: scale(1) rotate(0); }
+  40%  { transform: scale(1.3) rotate(-12deg); }
+  70%  { transform: scale(1.15) rotate(6deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.self-react-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7px; letter-spacing: 1px;
+  color: rgba(246,239,222,.4);
+  white-space: nowrap;
+}
+.self-react-btn:hover:not(:disabled) .self-react-label {
+  color: var(--accent-primary);
+}
+
+.reaction-pick-hint {
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  color: rgba(232,255,61,.5);
+  margin-top: 8px;
+  animation: hint-pulse 1.4s ease-in-out infinite;
+}
+@keyframes hint-pulse {
+  0%,100% { opacity: .5; }
+  50%      { opacity: 1; }
+}
+
+/* Floater — ahora usa img en lugar de svg */
+.reaction-float-svg img { width: 100%; height: 100%; object-fit: contain; }
