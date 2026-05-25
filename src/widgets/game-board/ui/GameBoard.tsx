@@ -83,13 +83,91 @@ const REACTIONS_SVG: Record<string, React.ReactNode> = {
       <text x="20" y="30" fontFamily="Anton,Impact,sans-serif" fontSize="15" fill="#9DE5FF">Z</text>
     </svg>
   ),
+  // ── Burlones extra ────────────────────────────────────────────────────────
+  laugh: (
+    <svg viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="13" fill="#E8FF3D"/>
+      <circle cx="11" cy="13" r="2.5" fill="#0E0B08"/>
+      <circle cx="21" cy="13" r="2.5" fill="#0E0B08"/>
+      <path d="M8 19 Q16 28 24 19" fill="#FF2244" stroke="#0E0B08" strokeWidth="1.4"/>
+      <path d="M8 19 Q16 24 24 19" fill="#f6efde"/>
+      <path d="M10 19 l14 0" stroke="#0E0B08" strokeWidth="1" fill="none"/>
+      {/* tears */}
+      <ellipse cx="7" cy="17" rx="2" ry="3" fill="#9DE5FF" opacity="0.85"/>
+      <ellipse cx="25" cy="17" rx="2" ry="3" fill="#9DE5FF" opacity="0.85"/>
+    </svg>
+  ),
+  thumbdown: (
+    <svg viewBox="0 0 32 32">
+      <path d="M18 28 l-4 0 c-1 0 -2 -1 -2 -2 l0 -8 l-5 0 c-1.5 0 -2.5 -1 -2 -2.5 l3 -10 c0.4 -1 1.2 -1.5 2 -1.5 l10 0 l0 11" fill="#FF6A1A" stroke="#0E0B08" strokeWidth="1.5" strokeLinejoin="round"/>
+      <rect x="20" y="6" width="5" height="13" rx="2" fill="#FF2244" stroke="#0E0B08" strokeWidth="1.5"/>
+    </svg>
+  ),
+  snail: (
+    <svg viewBox="0 0 32 32">
+      {/* shell */}
+      <circle cx="20" cy="16" r="8" fill="#FF6A1A" stroke="#0E0B08" strokeWidth="1.5"/>
+      <path d="M20 10 a6 6 0 0 1 0 12 a4 4 0 0 1 0 -8 a2 2 0 0 1 0 4" fill="none" stroke="#0E0B08" strokeWidth="1.2"/>
+      {/* body */}
+      <path d="M12 20 Q6 20 5 23 Q4 26 8 26 l10 0" fill="#E8FF3D" stroke="#0E0B08" strokeWidth="1.5" strokeLinejoin="round"/>
+      {/* antennae */}
+      <line x1="8" y1="20" x2="6" y2="16" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="11" y1="19" x2="10" y2="15" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="6" cy="15" r="1.5" fill="#0E0B08"/>
+      <circle cx="10" cy="14" r="1.5" fill="#0E0B08"/>
+    </svg>
+  ),
+  poop: (
+    <svg viewBox="0 0 32 32">
+      <ellipse cx="16" cy="24" rx="9" ry="5" fill="#6B3E11" stroke="#0E0B08" strokeWidth="1.2"/>
+      <ellipse cx="16" cy="20" rx="7" ry="4.5" fill="#7B4A1A" stroke="#0E0B08" strokeWidth="1.2"/>
+      <ellipse cx="16" cy="16.5" rx="5.5" ry="4" fill="#8B5A2A" stroke="#0E0B08" strokeWidth="1.2"/>
+      <path d="M13 10 Q16 4 19 10" fill="#9B6A3A" stroke="#0E0B08" strokeWidth="1.2"/>
+      {/* eyes */}
+      <circle cx="13.5" cy="16" r="1.5" fill="#0E0B08"/>
+      <circle cx="18.5" cy="16" r="1.5" fill="#0E0B08"/>
+      {/* smile */}
+      <path d="M13 19 Q16 21.5 19 19" fill="none" stroke="#0E0B08" strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  ),
+  banana: (
+    <svg viewBox="0 0 32 32">
+      {/* banana peel on floor */}
+      <path d="M4 26 Q10 18 20 20" fill="#E8FF3D" stroke="#0E0B08" strokeWidth="1.5"/>
+      <path d="M6 28 Q12 22 22 24" fill="#E8FF3D" stroke="#0E0B08" strokeWidth="1.5"/>
+      {/* stick figure falling */}
+      <circle cx="24" cy="8" r="3" fill="#f6efde" stroke="#0E0B08" strokeWidth="1.2"/>
+      <line x1="24" y1="11" x2="22" y2="18" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="22" y1="14" x2="18" y2="12" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="22" y1="14" x2="27" y2="13" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="22" y1="18" x2="18" y2="23" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="22" y1="18" x2="26" y2="22" stroke="#0E0B08" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  eyes: (
+    <svg viewBox="0 0 32 32">
+      {/* shifty side-eye */}
+      <ellipse cx="10" cy="16" rx="7" ry="6" fill="white" stroke="#0E0B08" strokeWidth="1.5"/>
+      <ellipse cx="22" cy="16" rx="7" ry="6" fill="white" stroke="#0E0B08" strokeWidth="1.5"/>
+      <circle cx="13" cy="16" r="3.5" fill="#0E0B08"/>
+      <circle cx="25" cy="16" r="3.5" fill="#0E0B08"/>
+      <circle cx="14" cy="15" r="1.2" fill="white"/>
+      <circle cx="26" cy="15" r="1.2" fill="white"/>
+    </svg>
+  ),
 };
 
 const REACTIONS_META = [
-  { key: 'clown', label: 'PAYASO' },
-  { key: 'skull', label: 'CRÁNEO' },
-  { key: 'fire',  label: 'FUEGO' },
-  { key: 'zzz',   label: 'DORMIDO' },
+  { key: 'clown',     label: 'PAYASO'  },
+  { key: 'skull',     label: 'CRÁNEO'  },
+  { key: 'fire',      label: 'FUEGO'   },
+  { key: 'zzz',       label: 'DORMIDO' },
+  { key: 'laugh',     label: 'JAJAJA'  },
+  { key: 'thumbdown', label: 'MALO'    },
+  { key: 'snail',     label: 'LENTO'   },
+  { key: 'poop',      label: 'CACA'    },
+  { key: 'banana',    label: 'RESBALA' },
+  { key: 'eyes',      label: 'OJITOS'  },
 ];
 
 interface FloatingReact { id: string; kind: string; x: number; y: number; drift: number; }
@@ -197,22 +275,26 @@ const MINI_RANKS = ['A','K','Q','J','10','7','2'];
 function GordoGloton({ onDone }: { onDone: () => void }) {
   const [nomIdx, setNomIdx] = useState(0);
   const [exiting, setExiting] = useState(false);
+  // Guardamos onDone en ref para que el useEffect no se reinicie con cada render
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   useEffect(() => {
     const nomInterval = setInterval(() => setNomIdx(i => (i + 1) % NOM_WORDS.length), 340);
+    // Duración reducida a 2.2s para no estorbar el gameplay
     const exitTimer = setTimeout(() => {
       setExiting(true);
-      setTimeout(onDone, 500);
-    }, 3400);
+      setTimeout(() => onDoneRef.current(), 400);
+    }, 2200);
     return () => { clearInterval(nomInterval); clearTimeout(exitTimer); };
-  }, [onDone]);
+  }, []); // sin deps — corre solo al montar
 
-  // 7 mini-cards in spiral
-  const miniCards = MINI_RANKS.map((rank, i) => {
-    const angle = (i / 7) * 360;
-    const radius = 160 + (i % 3) * 40;
-    const dur = 0.9 + i * 0.15;
-    const delay = i * 0.08;
+  // 5 mini-cards en espiral (reducidas para no tapar tanto)
+  const miniCards = MINI_RANKS.slice(0, 5).map((rank, i) => {
+    const angle = (i / 5) * 360;
+    const radius = 100 + (i % 3) * 28;
+    const dur = 0.8 + i * 0.12;
+    const delay = i * 0.07;
     return (
       <div key={i} className="gordo-mini-card"
            style={{
@@ -251,6 +333,7 @@ function GordoGloton({ onDone }: { onDone: () => void }) {
 }
 
 // ─── TurnFlowRing ─────────────────────────────────────────────────────────────
+// Flechas de dirección claras sobre el anillo. Sin IIFEs para evitar errores TS.
 
 function TurnFlowRing({
   playerOrder, currentPlayerId, playerColors,
@@ -259,84 +342,124 @@ function TurnFlowRing({
   currentPlayerId: string;
   playerColors: Record<string, string>;
 }) {
-  const R = 200; // ring radius
+  const R = 200;
   const size = (R + 36) * 2;
   const cx = size / 2;
   const cy = size / 2;
 
-  // 4 positions: north=top, east=right, south=bottom, west=left
-  const posAngles = [-90, 0, 90, 180]; // degrees, starting north going clockwise
-  // But flow is counter-clockwise, so we render in reverse order for the arrow dir
-
+  const posAngles = [-90, 0, 90, 180]; // top, right, bottom, left
   const activeIdx = playerOrder.indexOf(currentPlayerId);
-  // Speed: 3s per full rotation, slow down slightly if not active
-  const orbDur = `${playerOrder.length * 0.75}s`;
+  const nextIdx   = activeIdx >= 0 ? (activeIdx + 1) % playerOrder.length : -1;
+
+  // Pre-computar la flecha activa ANTES del return (evita IIFE dentro de JSX)
+  let activeArrowMx = 0, activeArrowMy = 0, activeArrowRot = 0;
+  let activeArrowLx = 0, activeArrowLy = 0;
+  let showActiveArrow = false;
+  if (activeIdx >= 0 && nextIdx >= 0) {
+    let fromDeg = posAngles[activeIdx] ?? 0;
+    let toDeg   = posAngles[nextIdx]   ?? 0;
+    if (toDeg >= fromDeg) toDeg -= 360;
+    const midDeg = (fromDeg + toDeg) / 2;
+    const midRad = (midDeg * Math.PI) / 180;
+    activeArrowMx  = cx + R * Math.cos(midRad);
+    activeArrowMy  = cy + R * Math.sin(midRad);
+    activeArrowRot = midDeg - 90;
+    activeArrowLx  = cx + (R - 46) * Math.cos(midRad);
+    activeArrowLy  = cy + (R - 46) * Math.sin(midRad);
+    showActiveArrow = true;
+  }
 
   return (
     <svg className="turn-flow-ring" width={size} height={size}
          viewBox={`0 0 ${size} ${size}`} style={{ pointerEvents: 'none' }}>
-      {/* Ring */}
-      <circle cx={cx} cy={cy} r={R} fill="none"
-              stroke="rgba(255,255,255,.06)" strokeWidth="2" strokeDasharray="6 8" />
 
-      {/* 4 triangular direction arrows between positions (counter-clockwise) */}
+      {/* Anillo base */}
+      <circle cx={cx} cy={cy} r={R} fill="none"
+              stroke="rgba(255,255,255,.07)" strokeWidth="2" strokeDasharray="6 10" />
+
+      {/* Flechas de dirección — una entre cada par de posiciones */}
       {posAngles.map((deg, i) => {
-        // Arrow sits between position i and (i+1)%4, pointing CCW
-        const midDeg = deg - 45; // halfway between i and prev (CCW means going backward)
-        const rad = (midDeg * Math.PI) / 180;
-        const ax = cx + R * Math.cos(rad);
-        const ay = cy + R * Math.sin(rad);
-        const arrowRot = midDeg - 90; // point tangentially CCW
+        const midDeg   = deg + 45; // mitad entre posición i y siguiente (clockwise)
+        const rad      = (midDeg * Math.PI) / 180;
+        const ax       = cx + R * Math.cos(rad);
+        const ay       = cy + R * Math.sin(rad);
+        const arrowRot = midDeg + 90; // tangente que apunta en la dirección de juego
+        const isHot    = i === activeIdx && nextIdx >= 0;
+        const fill     = isHot ? '#FF6A1A' : 'rgba(255,255,255,.22)';
+        const filt     = isHot
+          ? 'drop-shadow(0 0 6px #FF6A1A)'
+          : 'none';
         return (
           <g key={i} transform={`translate(${ax},${ay}) rotate(${arrowRot})`}>
-            <polygon points="-5,6 5,6 0,-7"
-                     fill="rgba(255,106,26,.55)"
-                     className="turn-flow-arrow" />
+            {/* Chevron doble para más visibilidad */}
+            <polygon points="-9,0 0,-14 9,0 6,0 0,-8 -6,0"
+                     fill={fill}
+                     style={{ filter: filt, transition: 'fill .3s, filter .3s' }} />
           </g>
         );
       })}
 
-      {/* Player badges */}
+      {/* Flecha pulsante grande entre jugador activo → siguiente */}
+      {showActiveArrow && (
+        <g transform={`translate(${activeArrowMx},${activeArrowMy}) rotate(${activeArrowRot})`}
+           className="turn-flow-pulse-arrow">
+          <polygon points="-13,0 0,-20 13,0 9,0 0,-12 -9,0"
+                   fill="#E8FF3D"
+                   style={{ filter: 'drop-shadow(0 0 10px #E8FF3D) drop-shadow(0 0 20px rgba(232,255,61,.6))' }} />
+        </g>
+      )}
+      {showActiveArrow && (
+        <text x={activeArrowLx} y={activeArrowLy + 4} textAnchor="middle"
+              fill="rgba(232,255,61,.6)"
+              fontSize="9" fontFamily="JetBrains Mono,monospace">
+          TURNO
+        </text>
+      )}
+
+      {/* Badges de jugadores */}
       {playerOrder.map((pid, i) => {
-        const deg = posAngles[i] ?? 0;
-        const rad = (deg * Math.PI) / 180;
-        const bx = cx + R * Math.cos(rad);
-        const by = cy + R * Math.sin(rad);
+        const deg    = posAngles[i] ?? 0;
+        const rad    = (deg * Math.PI) / 180;
+        const bx     = cx + R * Math.cos(rad);
+        const by     = cy + R * Math.sin(rad);
         const isActive = pid === currentPlayerId;
-        const color = playerColors[pid] ?? '#666';
+        const isNext   = i === nextIdx;
+        const color    = playerColors[pid] ?? '#666';
         return (
           <g key={pid}>
-            <circle cx={bx} cy={by} r={isActive ? 13 : 9}
-                    fill={isActive ? color : 'rgba(0,0,0,.6)'}
-                    stroke={isActive ? color : 'rgba(255,255,255,.15)'}
-                    strokeWidth={isActive ? 2 : 1}
-                    style={{ filter: isActive ? `drop-shadow(0 0 8px ${color})` : 'none', transition: 'all .3s' }} />
+            {isNext && (
+              <circle cx={bx} cy={by} r={20}
+                      fill="none" stroke="rgba(232,255,61,.3)" strokeWidth="2"
+                      className="turn-flow-next-halo" />
+            )}
+            <circle cx={bx} cy={by}
+                    r={isActive ? 14 : isNext ? 11 : 9}
+                    fill={isActive ? color : 'rgba(0,0,0,.7)'}
+                    stroke={isActive ? color : isNext ? 'rgba(232,255,61,.7)' : 'rgba(255,255,255,.15)'}
+                    strokeWidth={isActive ? 2 : isNext ? 1.5 : 1}
+                    style={{
+                      filter: isActive
+                        ? `drop-shadow(0 0 10px ${color})`
+                        : isNext ? 'drop-shadow(0 0 6px rgba(232,255,61,.5))' : 'none',
+                      transition: 'all .3s',
+                    }} />
             <text x={bx} y={by + 5} textAnchor="middle"
-                  fill={isActive ? '#0e0b08' : 'rgba(255,255,255,.5)'}
-                  fontSize="11" fontFamily="Anton,sans-serif"
+                  fill={isActive ? '#0e0b08' : 'rgba(255,255,255,.6)'}
+                  fontSize="12" fontFamily="Anton,sans-serif"
                   className="turn-flow-badge">
               {i + 1}
             </text>
           </g>
         );
       })}
-
-      {/* Traveling orange dot */}
-      <g className="turn-flow-dot" style={{ '--orbit-dur': orbDur } as React.CSSProperties}
-         transform={`translate(${cx},${cy})`}>
-        <circle cx={R} cy={0} r={6}
-                fill="#FF6A1A"
-                style={{ filter: 'drop-shadow(0 0 6px #FF6A1A) drop-shadow(0 0 12px rgba(255,106,26,.6))' }} />
-      </g>
     </svg>
   );
 }
 
 // ─── HUD Strip ────────────────────────────────────────────────────────────────
 
-function HudStrip({ round, roomId, phase, onGordo }: {
+function HudStrip({ round, roomId, phase }: {
   round: number; roomId: string; phase: string;
-  onGordo: () => void;
 }) {
   return (
     <div className="hud-strip">
@@ -355,8 +478,18 @@ function HudStrip({ round, roomId, phase, onGordo }: {
         <div className="hud-pill hud-pill-ghost">
           {phase === 'lobby' ? 'LOBBY' : phase === 'playing' ? 'EN JUEGO' : 'FIN'}
         </div>
-        <button className="hud-icon-btn" title="Gordo Glotón" onClick={onGordo} aria-label="Gordo Glotón">💀</button>
       </div>
+    </div>
+  );
+}
+
+// ─── Watermark ────────────────────────────────────────────────────────────────
+
+function Watermark() {
+  return (
+    <div className="watermark" aria-hidden="true">
+      By Jocobi with&nbsp;
+      <span className="watermark-heart">♥</span>
     </div>
   );
 }
@@ -559,15 +692,16 @@ interface DragState {
   moved: boolean; overDrop: boolean; flickReady: boolean;
 }
 
-function HandFan({ cards, selectedIds, draggingIdx, onPointerDownCard }: {
+function HandFan({ cards, selectedIds, draggingIdx, onPointerDownCard, isMyTurn }: {
   cards: Card[]; selectedIds: string[]; draggingIdx: number;
   onPointerDownCard: (idx: number, e: React.PointerEvent) => void;
+  isMyTurn: boolean;
 }) {
   const total = cards.length;
   const mid = (total - 1) / 2;
   // Responsive card spacing — shrinks on narrow viewports
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
-  const spacing = vw < 420 ? 30 : vw < 600 ? 38 : vw < 780 ? 44 : 52;
+  const spacing = vw < 380 ? 26 : vw < 420 ? 30 : vw < 600 ? 38 : vw < 780 ? 44 : 52;
   const tiltPer = vw < 420 ? 2.5 : 4;
   return (
     <div className="hand-wrap">
@@ -576,15 +710,16 @@ function HandFan({ cards, selectedIds, draggingIdx, onPointerDownCard }: {
           const offset = i - mid;
           const isSel = selectedIds.includes(c.id);
           const isDragging = i === draggingIdx;
+          const inactive = !isMyTurn && !isSel;
           return (
             <div key={c.id}
-                 className={`hand-slot${isSel ? ' hand-slot-sel' : ''}${isDragging ? ' hand-slot-dragging' : ''}`}
+                 className={`hand-slot${isSel ? ' hand-slot-sel' : ''}${isDragging ? ' hand-slot-dragging' : ''}${inactive ? ' hand-slot-inactive' : ''}`}
                  style={{
                    transform: `translateX(${offset * spacing}px) translateY(${Math.abs(offset) * 5 + (isSel ? -28 : 0)}px) rotate(${offset * tiltPer}deg)`,
                    zIndex: isSel ? 100 : 10 + i,
                  }}
                  onPointerDown={(e) => onPointerDownCard(i, e)}>
-              <CardFace card={c} lifted={isSel} />
+              <CardFace card={c} lifted={isSel} dim={inactive} />
             </div>
           );
         })}
@@ -641,32 +776,94 @@ function InterceptFlashOverlay({ active }: { active: boolean }) {
   );
 }
 
+// ─── EpicBlindReveal — overlay de la fase ciega ───────────────────────────────
+
+function EpicBlindReveal({ visible }: { visible: boolean }) {
+  // Overlay breve "¡FASE CIEGA!" que aparece al entrar a la fase
+  const [show, setShow] = useState(false);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (visible && !shown) {
+      setShow(true);
+      setShown(true);
+      setTimeout(() => setShow(false), 2200);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+  if (!show) return null;
+  return (
+    <div className="blind-reveal-overlay" aria-live="assertive">
+      <div className="blind-reveal-bg" />
+      <div className="blind-reveal-content">
+        <div className="blind-reveal-kicker">ÚLTIMA BARRERA</div>
+        <div className="blind-reveal-title">¡FASE CIEGA!</div>
+        <div className="blind-reveal-sub">Las cartas son un misterio — ¡buena suerte!</div>
+      </div>
+    </div>
+  );
+}
+
 // ─── SelfTableCards ───────────────────────────────────────────────────────────
 
 function SelfTableCards({ self, selectedIds, onToggle, isMyTurn, onPlay }: {
   self: SelfView; selectedIds: string[]; onToggle: (id: string) => void;
   isMyTurn: boolean; onPlay: () => void;
 }) {
-  if (self.hand.length === 0 && self.tableUp.length > 0) {
+  const inBlindPhase = self.hand.length === 0 && self.tableUp.length === 0 && self.tableDownCount > 0;
+  const inUpPhase    = self.hand.length === 0 && self.tableUp.length > 0;
+
+  // Fase boca-arriba (mesa visible)
+  if (inUpPhase) {
     return (
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        {self.tableUp.map(c => (
-          <CardFace key={c.id} card={c} size="hand"
-            selected={selectedIds.includes(c.id)}
-            onClick={() => isMyTurn && onToggle(c.id)} dim={!isMyTurn} />
-        ))}
+      <div className="table-cards-wrap">
+        <div className="table-phase-label">MESA</div>
+        <div className="table-cards-row">
+          {self.tableUp.map(c => (
+            <CardFace key={c.id} card={c} size="hand"
+              selected={selectedIds.includes(c.id)}
+              onClick={() => isMyTurn && onToggle(c.id)} dim={!isMyTurn} />
+          ))}
+        </div>
       </div>
     );
   }
-  if (self.hand.length === 0 && self.tableUp.length === 0 && self.tableDownCount > 0) {
+
+  // Fase ciega — la más dramática
+  if (inBlindPhase) {
     return (
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        {self.tableDown.map(cb => (
-          <CardBackComponent key={cb.id} card={cb} size="hand" onClick={() => isMyTurn && onPlay()} />
-        ))}
-      </div>
+      <>
+        <EpicBlindReveal visible />
+        <div className={`blind-phase-wrap${isMyTurn ? ' blind-phase-my-turn' : ''}`}>
+          <div className="blind-phase-header">
+            <span className="blind-phase-icon">⚠</span>
+            <span>CARTAS DESCONOCIDAS</span>
+            <span className="blind-phase-icon">⚠</span>
+          </div>
+          <div className="blind-cards-row">
+            {self.tableDown.map((cb, idx) => (
+              <div
+                key={cb.id}
+                className={`blind-card-mystery${isMyTurn ? ' blind-card-active' : ''}`}
+                onClick={() => isMyTurn && onPlay()}
+                style={{ animationDelay: `${idx * 0.12}s` }}
+                title={isMyTurn ? '¡Toca para revelar!' : undefined}
+              >
+                <div className="blind-card-question">?</div>
+                {isMyTurn && <div className="blind-card-pulse-ring" />}
+              </div>
+            ))}
+          </div>
+          {isMyTurn && (
+            <div className="blind-flip-hint">
+              <span className="blind-flip-arrow">↑</span>
+              ¡TOCA PARA REVELAR!
+            </div>
+          )}
+        </div>
+      </>
     );
   }
+
   return null;
 }
 
@@ -848,7 +1045,9 @@ export function GameBoard() {
         // Auto-show steal banner: interceptor stole turn from active player
         setSteal({ stealer: item.actorName, victim: item.targetName ?? '???' });
       } else if (item.kind === 'take_pile') {
-        // Show punishment overlay only to the player who took the pile
+        // Gordo Glotón se activa automáticamente para TODOS cuando alguien come el pozo
+        setGordoActive(true);
+        // Punishment overlay solo para quien tomó el pozo
         if (item.actorId === socketId) {
           const pileCount = gameView?.discardPileCount ?? 0;
           setPunish({ victim: item.actorName, cardCount: pileCount > 0 ? pileCount : (item.cardRanks?.length ?? 1) });
@@ -1006,8 +1205,10 @@ export function GameBoard() {
   if (self) playerColors[self.id] = self.avatarColor;
   opponents.forEach(o => { playerColors[o.id] = o.avatarColor; });
 
+  const myTurnActive = isMyTurn && phase === 'playing';
+
   return (
-    <div className="stage stage-patio">
+    <div className={`stage stage-patio${myTurnActive ? ' stage-my-turn' : ''}`}>
       {/* ── Environment ───────────────────────────────────── */}
       <div className="env-wood" />
       <div className="env-vignette" />
@@ -1015,10 +1216,11 @@ export function GameBoard() {
       <div className="env-neon" />
       <div className="env-grain" />
       <div className="table-disc" />
+      {/* Borde de turno pulsante */}
+      {myTurnActive && <div className="env-my-turn-border" aria-hidden="true" />}
 
       {/* ── HUD ───────────────────────────────────────────── */}
-      <HudStrip round={round} roomId={roomId} phase={phase}
-                onGordo={() => setGordoActive(true)} />
+      <HudStrip round={round} roomId={roomId} phase={phase} />
 
       {/* ── Activity Feed ─────────────────────────────────── */}
       <ActivityFeed items={lastActivity} />
@@ -1095,7 +1297,8 @@ export function GameBoard() {
           {self.hand.length > 0 && (
             <HandFan cards={self.hand} selectedIds={selectedCardIds}
                      draggingIdx={drag && drag.moved ? drag.idx : -1}
-                     onPointerDownCard={handleCardPointerDown} />
+                     onPointerDownCard={handleCardPointerDown}
+                     isMyTurn={isMyTurn} />
           )}
 
           {phase === 'playing' && (
@@ -1142,24 +1345,27 @@ export function GameBoard() {
         </div>
       ))}
 
-      {/* ── Special card animation ──────────────────── */}
+            {/* ── Special card animation ────────────── */}
       {specialAnim && <SpecialCardAnim kind={specialAnim} />}
 
-      {/* ── Steal banner ────────────────────────── */}
+      {/* ── Steal banner ────────── */}
       {steal && <StealBanner stealer={steal.stealer} victim={steal.victim} onDone={() => setSteal(null)} />}
 
-      {/* ── Punishment overlay ──────────────────── */}
+      {/* ── Punishment overlay ────── */}
       {punish && <PunishmentOverlay victim={punish.victim} cardCount={punish.cardCount}
                                     onDismiss={() => setPunish(null)} />}
 
-      {/* ── Gordo Glotón ───────────────────────── */}
+      {/* ── Gordo Glotón ─────────── */}
       {gordoActive && <GordoGloton onDone={() => setGordoActive(false)} />}
 
-      {/* ── Notifications ──────────────────────── */}
+      {/* ── Notifications ────────── */}
       <Notifications />
 
-      {/* ── Game End ───────────────────────────── */}
+      {/* ── Game End ───────────── */}
       <GameEndScreen />
+
+      {/* ── Watermark ─────────── */}
+      <Watermark />
     </div>
   );
 }

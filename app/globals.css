@@ -864,34 +864,38 @@ html, body {
 /* ─── GORDO GLOTÓN ────────────────────────────────────── */
 
 .gordo-overlay {
-  position: fixed; inset: 0; pointer-events: none; z-index: 230;
-  overflow: hidden;
+  /* Esquina inferior izquierda — no tapa el gameplay ni las cartas */
+  position: fixed;
+  left: 12px; bottom: 90px;
+  width: 220px; height: 220px;
+  pointer-events: none; z-index: 230;
+  overflow: visible;
 }
 
 .gordo-face-wrap {
   position: absolute; left: 50%;
   transform: translateX(-50%);
-  animation: gordo-bounce-in .6s cubic-bezier(.3,1.4,.4,1) forwards;
-  bottom: -160px;
+  animation: gordo-bounce-in .5s cubic-bezier(.3,1.4,.4,1) forwards;
+  bottom: -120px;
 }
 @keyframes gordo-bounce-in {
-  0%  { bottom: -160px; }
-  60% { bottom: 30px; }
-  80% { bottom: -10px; }
-  100%{ bottom: 20px; }
+  0%  { bottom: -120px; opacity: 0; }
+  60% { bottom: 20px;  opacity: 1; }
+  80% { bottom: -4px; }
+  100%{ bottom: 10px; }
 }
-.gordo-face-exit { animation: gordo-bounce-out .5s ease-in forwards; }
+.gordo-face-exit { animation: gordo-bounce-out .4s ease-in forwards; }
 @keyframes gordo-bounce-out {
-  0%  { bottom: 20px; }
-  100%{ bottom: -200px; }
+  0%  { bottom: 10px; opacity: 1; }
+  100%{ bottom: -160px; opacity: 0; }
 }
 
 .gordo-face {
   position: relative;
-  width: 160px; height: 160px; border-radius: 50%;
+  width: 110px; height: 110px; border-radius: 50%;
   background: radial-gradient(circle at 40% 35%, #FF9050, #FF6A1A 55%, #CC4A00 100%);
-  border: 5px solid var(--ink);
-  box-shadow: 0 0 30px rgba(255,106,26,.6), 0 0 60px rgba(255,106,26,.3), inset 0 -10px 20px rgba(0,0,0,.3);
+  border: 4px solid var(--ink);
+  box-shadow: 0 0 20px rgba(255,106,26,.6), 0 0 40px rgba(255,106,26,.3), inset 0 -8px 16px rgba(0,0,0,.3);
 }
 
 /* Eyes */
@@ -1150,4 +1154,313 @@ html, body {
   .hand-wrap { height: 108px; }
   .hand-fan { height: 100px; }
   .btn-play { font-size: 15px; padding: 9px 14px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   NUEVAS CARACTERÍSTICAS — Turno, Fase Ciega, Emojis
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── SEÑAL DE TURNO ACTIVO ──────────────────────────── */
+
+.env-my-turn-border {
+  position: absolute; inset: 0; pointer-events: none; z-index: 9998;
+  border: 4px solid var(--accent-secondary);
+  box-shadow:
+    inset 0 0 60px rgba(232,255,61,.1),
+    inset 0 0 120px rgba(232,255,61,.06),
+    0 0 0 2px rgba(232,255,61,.3);
+  animation: my-turn-border-pulse 1.5s ease-in-out infinite;
+}
+@keyframes my-turn-border-pulse {
+  0%,100% {
+    box-shadow: inset 0 0 60px rgba(232,255,61,.1), inset 0 0 120px rgba(232,255,61,.06);
+    border-color: rgba(232,255,61,.6);
+  }
+  50% {
+    box-shadow: inset 0 0 100px rgba(232,255,61,.22), inset 0 0 200px rgba(232,255,61,.1);
+    border-color: rgba(232,255,61,.95);
+  }
+}
+
+/* Fondo del stage también cambia sutilmente */
+.stage-my-turn .env-wood {
+  filter: brightness(1.12) saturate(1.1);
+  transition: filter .4s;
+}
+
+/* Banner de turno más prominente */
+.stage-my-turn .me-turn-badge {
+  animation: me-turn-pulse-hot 0.9s ease-in-out infinite;
+}
+@keyframes me-turn-pulse-hot {
+  0%,100% { box-shadow: 0 0 0 4px rgba(232,255,61,.2), 0 0 30px rgba(232,255,61,.5); }
+  50%     { box-shadow: 0 0 0 8px rgba(232,255,61,.1), 0 0 50px rgba(232,255,61,.8); }
+}
+
+/* ─── CARTAS INACTIVAS (no es tu turno) ──────────────── */
+
+.hand-slot-inactive {
+  pointer-events: none;
+  transition: filter .3s, opacity .3s;
+}
+.hand-slot-inactive .card {
+  filter: grayscale(0.75) brightness(0.55) !important;
+  opacity: 0.7;
+}
+
+/* ─── FASE CIEGA ÉPICA ───────────────────────────────── */
+
+/* Overlay de entrada a la fase ciega */
+.blind-reveal-overlay {
+  position: fixed; inset: 0; z-index: 250;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  animation: blind-reveal-fade 2.2s ease-in-out forwards;
+}
+@keyframes blind-reveal-fade {
+  0%   { opacity: 0; }
+  10%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.blind-reveal-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(157,229,255,.25) 0%, rgba(0,0,0,.85) 100%);
+}
+.blind-reveal-content { position: relative; text-align: center; z-index: 2; }
+.blind-reveal-kicker {
+  font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: .4em;
+  color: var(--neon-cyan); margin-bottom: 8px;
+}
+.blind-reveal-title {
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: clamp(60px, 10vw, 130px); line-height: .9; letter-spacing: .04em;
+  color: var(--neon-cyan);
+  text-shadow: -4px 4px 0 var(--ink), 0 0 40px rgba(157,229,255,.9), 0 0 80px rgba(157,229,255,.4);
+  animation: blind-title-in .6s cubic-bezier(.3,1.4,.4,1) forwards;
+}
+@keyframes blind-title-in {
+  0%  { transform: scale(1.8) rotate(-6deg); opacity: 0; filter: blur(8px); }
+  60% { transform: scale(.95) rotate(2deg); opacity: 1; filter: none; }
+  100%{ transform: scale(1) rotate(0); opacity: 1; }
+}
+.blind-reveal-sub {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: .2em;
+  color: rgba(255,255,255,.6); margin-top: 12px;
+}
+
+/* Contenedor fase ciega */
+.blind-phase-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 10px 14px 14px;
+  background: rgba(0,0,0,.5);
+  border: 1.5px solid rgba(157,229,255,.2);
+  border-radius: 14px;
+  backdrop-filter: blur(8px);
+}
+.blind-phase-wrap.blind-phase-my-turn {
+  border-color: rgba(157,229,255,.6);
+  box-shadow: 0 0 24px rgba(157,229,255,.25), 0 0 48px rgba(157,229,255,.1);
+  animation: blind-container-pulse 1.4s ease-in-out infinite;
+}
+@keyframes blind-container-pulse {
+  0%,100% { box-shadow: 0 0 24px rgba(157,229,255,.2); }
+  50%     { box-shadow: 0 0 48px rgba(157,229,255,.5), 0 0 80px rgba(157,229,255,.2); }
+}
+
+.blind-phase-header {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Anton', Impact, sans-serif; font-size: 11px; letter-spacing: .25em;
+  color: var(--neon-cyan); white-space: nowrap;
+}
+.blind-phase-icon {
+  font-size: 13px;
+  animation: blind-icon-blink .8s steps(2) infinite;
+}
+@keyframes blind-icon-blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.blind-cards-row { display: flex; gap: 10px; align-items: center; }
+
+/* Carta ciega misteriosa */
+.blind-card-mystery {
+  position: relative;
+  width: 68px; height: 100px;
+  border-radius: 9px;
+  background: repeating-linear-gradient(45deg, #1a0d05 0px, #1a0d05 6px, #0a0604 6px, #0a0604 12px);
+  border: 2px solid rgba(157,229,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  animation: blind-card-float 3s ease-in-out infinite;
+  overflow: hidden;
+}
+.blind-card-mystery::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at center, rgba(157,229,255,.08), transparent 70%);
+}
+
+.blind-card-mystery.blind-card-active {
+  cursor: pointer;
+  border-color: rgba(157,229,255,.75);
+  box-shadow: 0 0 16px rgba(157,229,255,.35), 0 0 32px rgba(157,229,255,.15);
+  animation: blind-card-active-pulse 1s ease-in-out infinite;
+}
+.blind-card-mystery.blind-card-active:hover {
+  transform: translateY(-10px) scale(1.06);
+  box-shadow: 0 0 30px rgba(157,229,255,.7), 0 16px 40px rgba(0,0,0,.6);
+}
+@keyframes blind-card-float {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-4px); }
+}
+@keyframes blind-card-active-pulse {
+  0%,100% { box-shadow: 0 0 16px rgba(157,229,255,.3), border-color: rgba(157,229,255,.75); }
+  50%     { box-shadow: 0 0 32px rgba(157,229,255,.7); border-color: rgba(157,229,255,1); }
+}
+
+.blind-card-question {
+  font-family: 'Anton', Impact, sans-serif; font-size: 42px; line-height: 1;
+  color: rgba(157,229,255,.35);
+  text-shadow: 0 0 20px rgba(157,229,255,.4);
+  position: relative; z-index: 2;
+  transition: all .2s;
+}
+.blind-card-active .blind-card-question {
+  color: rgba(157,229,255,.7);
+  text-shadow: 0 0 24px rgba(157,229,255,.8);
+  animation: blind-q-bounce .9s ease-in-out infinite;
+}
+@keyframes blind-q-bounce {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.15); }
+}
+
+/* Anillo de pulso al rededor de cada carta activa */
+.blind-card-pulse-ring {
+  position: absolute; inset: -6px;
+  border-radius: 14px;
+  border: 2px solid rgba(157,229,255,.5);
+  animation: blind-ring-expand 1.2s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes blind-ring-expand {
+  0%   { transform: scale(1); opacity: .8; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+.blind-flip-hint {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Anton', Impact, sans-serif; font-size: 13px; letter-spacing: .2em;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 12px rgba(157,229,255,.6);
+  animation: blind-hint-blink 1s ease-in-out infinite;
+}
+@keyframes blind-hint-blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+.blind-flip-arrow { font-size: 16px; color: var(--neon-cyan); }
+
+/* Contenedor cartas de mesa (fase boca-arriba) */
+.table-cards-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.table-phase-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .3em;
+  color: rgba(255,255,255,.4);
+}
+.table-cards-row { display: flex; gap: 8px; align-items: center; }
+
+/* ─── TURN FLOW RING — nuevas clases ─────────────────── */
+
+.turn-flow-pulse-arrow {
+  animation: arrow-pulse .9s ease-in-out infinite;
+}
+@keyframes arrow-pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%     { opacity: .7; transform: scale(1.25); }
+}
+
+.turn-flow-next-halo {
+  animation: next-halo-spin 2s linear infinite;
+  transform-origin: center;
+}
+@keyframes next-halo-spin {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -126; }
+}
+
+/* ─── REACT RAIL EXPANDIDO ───────────────────────────── */
+
+/* Con 10 reacciones el rail necesita ser más ancho */
+.player-north .react-rail,
+.player-south .react-rail { flex-wrap: wrap; max-width: 180px; border-radius: 14px; }
+.player-west  .react-rail,
+.player-east  .react-rail { flex-wrap: wrap; max-height: 200px; }
+
+/* ─── CARDS EN RESOLUCIONES BAJAS ────────────────────── */
+
+/* ≤ 420px — cartas del hand-fan más pequeñas */
+@media (max-width: 420px) {
+  /* Override inline styles con !important */
+  .hand-fan .card { width: 72px !important; height: 106px !important; }
+  .hand-fan .card-rank { font-size: 18px; }
+  .hand-fan .card-big-suit { font-size: 38px !important; }
+  .hand-fan .card-action-label { font-size: 9px; }
+}
+
+/* ≤ 360px — escalar todavía más */
+@media (max-width: 360px) {
+  .hand-fan .card { width: 60px !important; height: 88px !important; }
+  .hand-fan .card-rank { font-size: 15px; }
+  .hand-fan .card-big-suit { font-size: 30px !important; }
+  .hand-fan .card-suit { font-size: 10px; }
+  .hand-fan .card-corner-tl { top: 5px; left: 5px; }
+  .hand-fan .card-corner-br { bottom: 5px; right: 5px; }
+
+  /* Escalar también las cartas de mesa en fase ciega */
+  .blind-card-mystery { width: 58px; height: 86px; }
+  .blind-card-question { font-size: 34px; }
+
+  /* Bottom bar más compacta */
+  .blind-phase-wrap { padding: 6px 8px 10px; gap: 6px; }
+  .blind-cards-row { gap: 6px; }
+}
+
+/* ≤ 320px — modo extremo */
+@media (max-width: 320px) {
+  .hand-fan { transform: scale(0.82); transform-origin: center bottom; }
+  .hand-wrap { overflow: visible; }
+  .blind-phase-wrap { padding: 4px 6px 8px; }
+}
+
+/* ─── WATERMARK ──────────────────────────────────────── */
+
+.watermark {
+  position: fixed;
+  bottom: 10px;
+  right: 14px;
+  z-index: 9999;
+  pointer-events: none;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .14em;
+  color: rgba(246,239,222,.22);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: color .3s;
+  user-select: none;
+}
+.watermark:hover {
+  color: rgba(246,239,222,.55);
+}
+.watermark-heart {
+  color: #FF2244;
+  opacity: .55;
+  font-size: 12px;
+  line-height: 1;
+  animation: wm-heart-beat 2.4s ease-in-out infinite;
+}
+@keyframes wm-heart-beat {
+  0%,100% { transform: scale(1);    opacity: .55; }
+  40%     { transform: scale(1.25); opacity: .9;  }
+  55%     { transform: scale(1);    opacity: .55; }
+  70%     { transform: scale(1.15); opacity: .75; }
 }
