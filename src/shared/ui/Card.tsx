@@ -1,7 +1,7 @@
 // =============================================================================
 // 4 Amigos — Componente de Carta
-// Puerto TypeScript del diseño original (cards.jsx).
-// Soporta: carta de frente, carta de espaldas, tamaños: hand | pile | small
+// Implementación pixel-fiel del diseño en cards.jsx.
+// Usa las clases CSS de globals.css.
 // =============================================================================
 
 import React from 'react';
@@ -31,7 +31,8 @@ const SIZE_MAP = {
   small: { w: 62,  h: 92  },
 } as const;
 
-// ─────────────────────────── Iconos de acción ─────────────────────────────────
+// ─────────────────────────── Iconos de acción ────────────────────────────────
+// SVGs custom, pixel-fieles al diseño. NO usar emojis.
 
 function ActionIcon({ rank, size = 64 }: { rank: string; size?: number }) {
   const s = size;
@@ -87,36 +88,7 @@ function ActionIcon({ rank, size = 64 }: { rank: string; size?: number }) {
   return null;
 }
 
-// ─────────────────────────── Carta boca abajo ─────────────────────────────────
-
-function CardBackFace({ w, h, rotate = 0, style }: {
-  w: number; h: number; rotate?: number; style?: React.CSSProperties;
-}) {
-  return (
-    <div
-      className="card-back"
-      style={{
-        width: w, height: h,
-        transform: `rotate(${rotate}deg)`,
-        borderRadius: 8,
-        background: 'linear-gradient(135deg, #1a1208 0%, #2a1d12 100%)',
-        border: '1.5px solid rgba(255,106,26,0.35)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
-        ...style,
-      }}
-    >
-      <span style={{ fontFamily: 'Anton, sans-serif', fontSize: Math.max(w * 0.22, 10), color: '#FF6A1A', letterSpacing: 1 }}>4A</span>
-      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: Math.max(w * 0.09, 7), color: 'rgba(255,106,26,0.5)', letterSpacing: 2 }}>AMIGOS</span>
-    </div>
-  );
-}
-
-// ─────────────────────────── Componente principal ─────────────────────────────
+// ─────────────────────────── Tipos ───────────────────────────────────────────
 
 type CardSize = 'hand' | 'pile' | 'small';
 
@@ -126,6 +98,7 @@ interface CardFaceProps {
   selected?: boolean;
   glow?: boolean;
   dim?: boolean;
+  lifted?: boolean;
   rotate?: number;
   onClick?: () => void;
   style?: React.CSSProperties;
@@ -136,145 +109,135 @@ interface CardBackProps {
   card: CardBack;
   size?: CardSize;
   rotate?: number;
+  glow?: boolean;
   style?: React.CSSProperties;
   onClick?: () => void;
   className?: string;
 }
 
+// ─────────────────────────── CardFace ────────────────────────────────────────
+
 export function CardFace({
   card, size = 'hand', selected = false, glow = false, dim = false,
-  rotate = 0, onClick, style, className = '',
+  lifted = false, rotate = 0, onClick, style, className = '',
 }: CardFaceProps) {
   const { w, h } = SIZE_MAP[size];
   const isAction = ACTION_RANKS.has(card.rank);
-  const suitInfo = SUIT_MAP[card.suit];
-  const iconSize = size === 'pile' ? 76 : 54;
+  const suitInfo = SUIT_MAP[card.suit as keyof typeof SUIT_MAP] ?? SUIT_MAP.oros;
+  const iconSize = size === 'pile' ? 76 : 64;
+
+  const cls = [
+    'card',
+    isAction ? 'card-action' : '',
+    glow ? 'card-glow' : '',
+    dim ? 'card-dim' : '',
+    lifted || selected ? 'card-lifted' : '',
+    className,
+  ].filter(Boolean).join(' ');
 
   return (
     <div
+      className={cls}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
-      className={className}
       style={{
-        width: w,
-        height: h,
-        borderRadius: 8,
-        background: isAction ? '#0e0b08' : '#f6efde',
-        border: selected
-          ? '2.5px solid #FF6A1A'
-          : glow
-            ? '2px solid rgba(232,255,61,0.6)'
-            : '1.5px solid rgba(0,0,0,0.15)',
-        boxShadow: selected
-          ? '0 0 16px rgba(255,106,26,0.7), 0 4px 12px rgba(0,0,0,0.5)'
-          : glow
-            ? '0 0 12px rgba(232,255,61,0.4), 0 3px 8px rgba(0,0,0,0.4)'
-            : '0 2px 8px rgba(0,0,0,0.35)',
-        transform: `rotate(${rotate}deg) ${selected ? 'translateY(-8px)' : ''}`,
-        transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
-        opacity: dim ? 0.45 : 1,
+        width: w, height: h,
+        transform: `rotate(${rotate}deg)${selected ? ' translateY(-8px)' : ''}`,
         cursor: onClick ? 'pointer' : 'default',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '5px 5px',
-        userSelect: 'none',
         ...style,
       }}
+      data-action={isAction ? '1' : '0'}
     >
       {/* Esquina superior izquierda */}
-      <div style={{ alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-        <span style={{ fontWeight: 700, fontSize: size === 'small' ? 11 : 14, color: isAction ? '#f6efde' : '#0e0b08', fontFamily: 'JetBrains Mono, monospace' }}>
-          {card.rank}
-        </span>
-        <span style={{ fontSize: size === 'small' ? 9 : 11, color: suitInfo.color }}>
-          {suitInfo.glyph}
-        </span>
+      <div className="card-corner card-corner-tl">
+        <div className="card-rank">{card.rank}</div>
+        <div className="card-suit" style={{ color: suitInfo.color }}>{suitInfo.glyph}</div>
       </div>
 
       {/* Centro */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+      <div className="card-center">
         {isAction ? (
           <>
-            <ActionIcon rank={card.rank} size={iconSize} />
+            <ActionIcon rank={card.rank} size={size === 'small' ? 40 : iconSize} />
             {size !== 'small' && (
-              <span style={{ fontFamily: 'Anton, sans-serif', fontSize: 9, color: '#FF6A1A', letterSpacing: 2 }}>
-                {ACTION_LABEL[card.rank]}
-              </span>
+              <div className="card-action-label">{ACTION_LABEL[card.rank]}</div>
             )}
           </>
         ) : (
-          <span style={{ fontSize: size === 'pile' ? 44 : size === 'hand' ? 36 : 24, color: suitInfo.color }}>
+          <div className="card-big-suit" style={{ color: suitInfo.color, fontSize: size === 'pile' ? 52 : size === 'small' ? 32 : 48 }}>
             {suitInfo.glyph}
-          </span>
+          </div>
         )}
       </div>
 
       {/* Esquina inferior derecha */}
-      <div style={{ alignSelf: 'flex-end', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1, transform: 'rotate(180deg)' }}>
-        <span style={{ fontWeight: 700, fontSize: size === 'small' ? 11 : 14, color: isAction ? '#f6efde' : '#0e0b08', fontFamily: 'JetBrains Mono, monospace' }}>
-          {card.rank}
-        </span>
-        <span style={{ fontSize: size === 'small' ? 9 : 11, color: suitInfo.color }}>
-          {suitInfo.glyph}
-        </span>
+      <div className="card-corner card-corner-br">
+        <div className="card-rank">{card.rank}</div>
+        <div className="card-suit" style={{ color: suitInfo.color }}>{suitInfo.glyph}</div>
       </div>
 
-      {/* Sticker de carta de acción */}
-      {isAction && (
-        <div style={{
-          position: 'absolute', top: 4, right: 4,
-          width: 8, height: 8, borderRadius: '50%',
-          background: suitInfo.color,
-          boxShadow: `0 0 6px ${suitInfo.color}`,
-        }} />
-      )}
+      {/* Sticker de alerta en cartas de acción */}
+      {isAction && <div className="card-action-sticker" />}
     </div>
   );
 }
 
-export function CardBackComponent({ card, size = 'hand', rotate, style, onClick, className }: CardBackProps) {
+// ─────────────────────────── CardBack ────────────────────────────────────────
+
+export function CardBackComponent({ card, size = 'hand', rotate = 0, glow, style, onClick, className = '' }: CardBackProps) {
   const { w, h } = SIZE_MAP[size];
+  const cls = ['card', 'back', glow ? 'card-glow' : '', className].filter(Boolean).join(' ');
+
   return (
-    <div onClick={onClick} className={className} style={{ cursor: onClick ? 'pointer' : 'default' }}>
-      <CardBackFace w={w} h={h} rotate={rotate} style={style} />
+    <div
+      className={cls}
+      onClick={onClick}
+      style={{
+        width: w, height: h,
+        transform: `rotate(${rotate}deg)`,
+        cursor: onClick ? 'pointer' : 'default',
+        ...style,
+      }}
+    >
+      <div className="back-grid">
+        <div className="back-mono">4A</div>
+        <div className="back-mono back-mono-sm">AMIGOS</div>
+      </div>
     </div>
   );
 }
 
-/** Componente unificado: acepta Card o CardBack */
+// ─────────────────────────── CardView unificado ───────────────────────────────
+
 export function CardView({
-  card,
-  size = 'hand',
-  selected,
-  glow,
-  dim,
-  rotate,
-  onClick,
-  style,
-  className,
+  card, size = 'hand', selected, glow, dim, lifted, rotate, onClick, style, className,
 }: {
-  card: CardType | import('@/src/shared/types/game').CardBack;
+  card: CardType | CardBack;
   size?: CardSize;
   selected?: boolean;
   glow?: boolean;
   dim?: boolean;
+  lifted?: boolean;
   rotate?: number;
   onClick?: () => void;
   style?: React.CSSProperties;
   className?: string;
 }) {
   if ('faceDown' in card) {
-    return <CardBackComponent card={card} size={size} rotate={rotate} style={style} onClick={onClick} className={className} />;
+    return (
+      <CardBackComponent
+        card={card} size={size} rotate={rotate} glow={glow}
+        style={style} onClick={onClick} className={className}
+      />
+    );
   }
   return (
     <CardFace
       card={card} size={size} selected={selected} glow={glow}
-      dim={dim} rotate={rotate} onClick={onClick} style={style} className={className}
+      dim={dim} lifted={lifted} rotate={rotate}
+      onClick={onClick} style={style} className={className}
     />
   );
 }
