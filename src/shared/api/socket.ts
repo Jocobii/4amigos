@@ -8,7 +8,7 @@
 //   S -> C: { "event": "ROOM_STATE", "payload": { ... } }
 // =============================================================================
 
-type Listener = (...args: unknown[]) => void;
+type Listener = (...args: any[]) => void;
 
 class WsSocket {
   private ws: WebSocket | null = null;

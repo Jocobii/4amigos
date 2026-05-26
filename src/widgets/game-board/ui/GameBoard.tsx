@@ -22,11 +22,11 @@ const TURN_SECONDS = 15;
 const POSITIONS = ['north', 'west', 'east'] as const;
 
 const POZO_TIERS = [
-  { min: 0,  label: 'EN MESA',    copy: 'tranqui' },
-  { min: 4,  label: 'CALENTANDO', copy: 'va creciendo' },
-  { min: 7,  label: 'CALIENTE',   copy: 'cuidado' },
-  { min: 11, label: 'EN LLAMAS',  copy: 'se te quema' },
-  { min: 16, label: '¡BOMBA!',    copy: 'te la comes toda' },
+  { min: 0, label: 'EN MESA', copy: 'tranqui' },
+  { min: 4, label: 'CALENTANDO', copy: 'va creciendo' },
+  { min: 7, label: 'CALIENTE', copy: 'cuidado' },
+  { min: 11, label: 'EN LLAMAS', copy: 'se te quema' },
+  { min: 16, label: '¡BOMBA!', copy: 'te la comes toda' },
 ];
 
 function pozoTier(count: number): number {
@@ -39,14 +39,14 @@ function pozoTier(count: number): number {
 
 function pileRandoms(i: number) {
   const s1 = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
-  const s2 = Math.sin(i * 39.345  + 11.135) * 17329.1234;
-  const s3 = Math.sin(i * 91.27   +  4.500) *  9912.3;
-  const s4 = Math.sin(i * 53.811  + 22.881) *  6314.7707;
+  const s2 = Math.sin(i * 39.345 + 11.135) * 17329.1234;
+  const s3 = Math.sin(i * 91.27 + 4.500) * 9912.3;
+  const s4 = Math.sin(i * 53.811 + 22.881) * 6314.7707;
   return { rx: s1 - Math.floor(s1), ry: s2 - Math.floor(s2), rr: s3 - Math.floor(s3), suit: s4 - Math.floor(s4) };
 }
 
 const SUIT_KEYS = ['oros', 'copas', 'espadas', 'bastos'] as const;
-const RANK_POOL = ['3','4','5','6','7','8','9','Q','J','K'];
+const RANK_POOL = ['3', '4', '5', '6', '7', '8', '9', 'Q', 'J', 'K'];
 const SUIT_COLORS = { oros: '#E8FF3D', copas: '#FF2244', espadas: '#9DE5FF', bastos: '#FF6A1A' };
 
 // ─── TWEMOJI — high-quality SVG emoji from CDN ───────────────────────────────
@@ -74,16 +74,16 @@ function TwEmoji({ emoji, size = 28 }: { emoji: string; size?: number }) {
 // ─── REACTIONS META (Twemoji-powered) ────────────────────────────────────────
 
 const REACTIONS_META = [
-  { key: 'clown',     label: 'PAYASO',  emoji: '🤡' },
-  { key: 'skull',     label: 'CRÁNEO',  emoji: '💀' },
-  { key: 'fire',      label: 'FUEGO',   emoji: '🔥' },
-  { key: 'zzz',       label: 'DORMIDO', emoji: '😴' },
-  { key: 'laugh',     label: 'JAJAJA',  emoji: '😂' },
-  { key: 'thumbdown', label: 'MALO',    emoji: '👎' },
-  { key: 'snail',     label: 'LENTO',   emoji: '🐌' },
-  { key: 'poop',      label: 'CACA',    emoji: '💩' },
-  { key: 'banana',    label: 'RESBALA', emoji: '🍌' },
-  { key: 'eyes',      label: 'OJITOS',  emoji: '👀' },
+  { key: 'clown', label: 'PAYASO', emoji: '🤡' },
+  { key: 'skull', label: 'CRÁNEO', emoji: '💀' },
+  { key: 'fire', label: 'FUEGO', emoji: '🔥' },
+  { key: 'zzz', label: 'DORMIDO', emoji: '😴' },
+  { key: 'laugh', label: 'JAJAJA', emoji: '😂' },
+  { key: 'thumbdown', label: 'MALO', emoji: '👎' },
+  { key: 'snail', label: 'LENTO', emoji: '🐌' },
+  { key: 'poop', label: 'CACA', emoji: '💩' },
+  { key: 'banana', label: 'RESBALA', emoji: '🍌' },
+  { key: 'eyes', label: 'OJITOS', emoji: '👀' },
 ];
 
 // Helper: get emoji char for a reaction key
@@ -114,10 +114,42 @@ function TimerRing({ remaining, total, size = 92 }: { remaining: number; total: 
   const stroke = remaining <= 1 ? '#FF2244' : remaining <= 3 ? '#FF6A1A' : '#E8FF3D';
   return (
     <svg className={`timer-ring${danger ? ' timer-danger' : ''}`} width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="4"/>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={stroke} strokeWidth="5"
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="4" />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke} strokeWidth="5"
+        strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
+        strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+    </svg>
+  );
+}
+
+// ─── AvatarTimerRing — anillo SVG sobre el avatar del oponente activo ────────
+// Se posiciona con inset negativo para envolver el avatar-disc (72px base).
+
+function AvatarTimerRing({ remaining, total }: { remaining: number; total: number }) {
+  const size = 84; // avatar 72px + 6px padding cada lado
+  const sw   = 4;
+  const r    = (size - sw) / 2;
+  const C    = 2 * Math.PI * r;
+  const pct  = Math.max(0, Math.min(1, remaining / total));
+  const stroke = remaining <= 1 ? '#FF2244' : remaining <= 3 ? '#FF6A1A' : '#E8FF3D';
+  const danger = remaining <= 3;
+  return (
+    <svg
+      width={size} height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      style={{ position: 'absolute', inset: -6, pointerEvents: 'none', zIndex: 3, overflow: 'visible' }}
+      className={danger ? 'timer-danger' : undefined}
+    >
+      {/* Track tenue */}
+      <circle cx={size / 2} cy={size / 2} r={r}
+              fill="none" stroke="rgba(255,255,255,.1)" strokeWidth={sw} />
+      {/* Arco de progreso */}
+      <circle cx={size / 2} cy={size / 2} r={r}
+              fill="none" stroke={stroke} strokeWidth={sw}
               strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
-              strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`}/>
+              strokeLinecap="round"
+              transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              style={{ transition: 'stroke-dashoffset .2s linear, stroke .3s' }} />
     </svg>
   );
 }
@@ -175,10 +207,10 @@ function PunishmentOverlay({ victim, cardCount, onDismiss }: { victim: string; c
 type SpecialKind = 'burn' | 'reset' | 'block' | 'ace';
 
 const SPECIAL_CONFIG: Record<SpecialKind, { bg: string; text: string; label: string }> = {
-  burn:  { bg: 'special-anim-burn',  text: 'special-anim-burn-text',  label: '🔥 QUEMA!' },
+  burn: { bg: 'special-anim-burn', text: 'special-anim-burn-text', label: '🔥 QUEMA!' },
   reset: { bg: 'special-anim-reset', text: 'special-anim-reset-text', label: '♻ RESET' },
   block: { bg: 'special-anim-block', text: 'special-anim-block-text', label: '🚫 BLOQUEO' },
-  ace:   { bg: 'special-anim-ace',   text: 'special-anim-ace-text',   label: 'AS REINA' },
+  ace: { bg: 'special-anim-ace', text: 'special-anim-ace-text', label: 'AS REINA' },
 };
 
 function SpecialCardAnim({ kind }: { kind: SpecialKind }) {
@@ -193,7 +225,7 @@ function SpecialCardAnim({ kind }: { kind: SpecialKind }) {
 // ─── GordoGloton ─────────────────────────────────────────────────────────────
 
 const NOM_WORDS = ['NOM', 'GULP', 'ÑAM', 'NOM', 'CRUNCH', 'ÑAM'];
-const MINI_RANKS = ['A','K','Q','J','10','7','2'];
+const MINI_RANKS = ['A', 'K', 'Q', 'J', '10', '7', '2'];
 
 function GordoGloton({ onDone }: { onDone: () => void }) {
   const [nomIdx, setNomIdx] = useState(0);
@@ -220,14 +252,14 @@ function GordoGloton({ onDone }: { onDone: () => void }) {
     const delay = i * 0.07;
     return (
       <div key={i} className="gordo-mini-card"
-           style={{
-             left: '50%', top: '50%',
-             marginLeft: -14, marginTop: -20,
-             '--start-rot': `${angle}deg`,
-             '--radius': `${radius}px`,
-             '--dur': `${dur}s`,
-             '--delay': `${delay}s`,
-           } as React.CSSProperties}>
+        style={{
+          left: '50%', top: '50%',
+          marginLeft: -14, marginTop: -20,
+          '--start-rot': `${angle}deg`,
+          '--radius': `${radius}px`,
+          '--dur': `${dur}s`,
+          '--delay': `${delay}s`,
+        } as React.CSSProperties}>
         {rank}
       </div>
     );
@@ -243,7 +275,7 @@ function GordoGloton({ onDone }: { onDone: () => void }) {
           <div className="gordo-eye gordo-eye-r"><div className="gordo-pupil" /></div>
           <div className="gordo-mouth-wrap">
             <div className="gordo-teeth">
-              {[0,1,2,3,4].map(i => <div key={i} className="gordo-tooth" />)}
+              {[0, 1, 2, 3, 4].map(i => <div key={i} className="gordo-tooth" />)}
             </div>
             <div className="gordo-tongue"><div className="gordo-tongue-line" /></div>
           </div>
@@ -272,7 +304,7 @@ function TurnFlowRing({
 
   const posAngles = [-90, 0, 90, 180]; // top, right, bottom, left
   const activeIdx = playerOrder.indexOf(currentPlayerId);
-  const nextIdx   = activeIdx >= 0 ? (activeIdx + 1) % playerOrder.length : -1;
+  const nextIdx = activeIdx >= 0 ? (activeIdx + 1) % playerOrder.length : -1;
 
   // Pre-computar la flecha activa ANTES del return (evita IIFE dentro de JSX)
   let activeArrowMx = 0, activeArrowMy = 0, activeArrowRot = 0;
@@ -280,44 +312,44 @@ function TurnFlowRing({
   let showActiveArrow = false;
   if (activeIdx >= 0 && nextIdx >= 0) {
     let fromDeg = posAngles[activeIdx] ?? 0;
-    let toDeg   = posAngles[nextIdx]   ?? 0;
+    let toDeg = posAngles[nextIdx] ?? 0;
     if (toDeg >= fromDeg) toDeg -= 360;
     const midDeg = (fromDeg + toDeg) / 2;
     const midRad = (midDeg * Math.PI) / 180;
-    activeArrowMx  = cx + R * Math.cos(midRad);
-    activeArrowMy  = cy + R * Math.sin(midRad);
+    activeArrowMx = cx + R * Math.cos(midRad);
+    activeArrowMy = cy + R * Math.sin(midRad);
     activeArrowRot = midDeg - 90;
-    activeArrowLx  = cx + (R - 46) * Math.cos(midRad);
-    activeArrowLy  = cy + (R - 46) * Math.sin(midRad);
+    activeArrowLx = cx + (R - 46) * Math.cos(midRad);
+    activeArrowLy = cy + (R - 46) * Math.sin(midRad);
     showActiveArrow = true;
   }
 
   return (
     <svg className="turn-flow-ring" width={size} height={size}
-         viewBox={`0 0 ${size} ${size}`} style={{ pointerEvents: 'none' }}>
+      viewBox={`0 0 ${size} ${size}`} style={{ pointerEvents: 'none' }}>
 
       {/* Anillo base */}
       <circle cx={cx} cy={cy} r={R} fill="none"
-              stroke="rgba(255,255,255,.07)" strokeWidth="2" strokeDasharray="6 10" />
+        stroke="rgba(255,255,255,.07)" strokeWidth="2" strokeDasharray="6 10" />
 
       {/* Flechas de dirección — una entre cada par de posiciones */}
       {posAngles.map((deg, i) => {
-        const midDeg   = deg + 45; // mitad entre posición i y siguiente (clockwise)
-        const rad      = (midDeg * Math.PI) / 180;
-        const ax       = cx + R * Math.cos(rad);
-        const ay       = cy + R * Math.sin(rad);
+        const midDeg = deg + 45; // mitad entre posición i y siguiente (clockwise)
+        const rad = (midDeg * Math.PI) / 180;
+        const ax = cx + R * Math.cos(rad);
+        const ay = cy + R * Math.sin(rad);
         const arrowRot = midDeg + 90; // tangente que apunta en la dirección de juego
-        const isHot    = i === activeIdx && nextIdx >= 0;
-        const fill     = isHot ? '#FF6A1A' : 'rgba(255,255,255,.22)';
-        const filt     = isHot
+        const isHot = i === activeIdx && nextIdx >= 0;
+        const fill = isHot ? '#FF6A1A' : 'rgba(255,255,255,.22)';
+        const filt = isHot
           ? 'drop-shadow(0 0 6px #FF6A1A)'
           : 'none';
         return (
           <g key={i} transform={`translate(${ax},${ay}) rotate(${arrowRot})`}>
             {/* Chevron doble para más visibilidad */}
             <polygon points="-9,0 0,-14 9,0 6,0 0,-8 -6,0"
-                     fill={fill}
-                     style={{ filter: filt, transition: 'fill .3s, filter .3s' }} />
+              fill={fill}
+              style={{ filter: filt, transition: 'fill .3s, filter .3s' }} />
           </g>
         );
       })}
@@ -325,51 +357,51 @@ function TurnFlowRing({
       {/* Flecha pulsante grande entre jugador activo → siguiente */}
       {showActiveArrow && (
         <g transform={`translate(${activeArrowMx},${activeArrowMy}) rotate(${activeArrowRot})`}
-           className="turn-flow-pulse-arrow">
+          className="turn-flow-pulse-arrow">
           <polygon points="-13,0 0,-20 13,0 9,0 0,-12 -9,0"
-                   fill="#E8FF3D"
-                   style={{ filter: 'drop-shadow(0 0 10px #E8FF3D) drop-shadow(0 0 20px rgba(232,255,61,.6))' }} />
+            fill="#E8FF3D"
+            style={{ filter: 'drop-shadow(0 0 10px #E8FF3D) drop-shadow(0 0 20px rgba(232,255,61,.6))' }} />
         </g>
       )}
       {showActiveArrow && (
         <text x={activeArrowLx} y={activeArrowLy + 4} textAnchor="middle"
-              fill="rgba(232,255,61,.6)"
-              fontSize="9" fontFamily="JetBrains Mono,monospace">
+          fill="rgba(232,255,61,.6)"
+          fontSize="9" fontFamily="JetBrains Mono,monospace">
           TURNO
         </text>
       )}
 
       {/* Badges de jugadores */}
       {playerOrder.map((pid, i) => {
-        const deg    = posAngles[i] ?? 0;
-        const rad    = (deg * Math.PI) / 180;
-        const bx     = cx + R * Math.cos(rad);
-        const by     = cy + R * Math.sin(rad);
+        const deg = posAngles[i] ?? 0;
+        const rad = (deg * Math.PI) / 180;
+        const bx = cx + R * Math.cos(rad);
+        const by = cy + R * Math.sin(rad);
         const isActive = pid === currentPlayerId;
-        const isNext   = i === nextIdx;
-        const color    = playerColors[pid] ?? '#666';
+        const isNext = i === nextIdx;
+        const color = playerColors[pid] ?? '#666';
         return (
           <g key={pid}>
             {isNext && (
               <circle cx={bx} cy={by} r={20}
-                      fill="none" stroke="rgba(232,255,61,.3)" strokeWidth="2"
-                      className="turn-flow-next-halo" />
+                fill="none" stroke="rgba(232,255,61,.3)" strokeWidth="2"
+                className="turn-flow-next-halo" />
             )}
             <circle cx={bx} cy={by}
-                    r={isActive ? 14 : isNext ? 11 : 9}
-                    fill={isActive ? color : 'rgba(0,0,0,.7)'}
-                    stroke={isActive ? color : isNext ? 'rgba(232,255,61,.7)' : 'rgba(255,255,255,.15)'}
-                    strokeWidth={isActive ? 2 : isNext ? 1.5 : 1}
-                    style={{
-                      filter: isActive
-                        ? `drop-shadow(0 0 10px ${color})`
-                        : isNext ? 'drop-shadow(0 0 6px rgba(232,255,61,.5))' : 'none',
-                      transition: 'all .3s',
-                    }} />
+              r={isActive ? 14 : isNext ? 11 : 9}
+              fill={isActive ? color : 'rgba(0,0,0,.7)'}
+              stroke={isActive ? color : isNext ? 'rgba(232,255,61,.7)' : 'rgba(255,255,255,.15)'}
+              strokeWidth={isActive ? 2 : isNext ? 1.5 : 1}
+              style={{
+                filter: isActive
+                  ? `drop-shadow(0 0 10px ${color})`
+                  : isNext ? 'drop-shadow(0 0 6px rgba(232,255,61,.5))' : 'none',
+                transition: 'all .3s',
+              }} />
             <text x={bx} y={by + 5} textAnchor="middle"
-                  fill={isActive ? '#0e0b08' : 'rgba(255,255,255,.6)'}
-                  fontSize="12" fontFamily="Anton,sans-serif"
-                  className="turn-flow-badge">
+              fill={isActive ? '#0e0b08' : 'rgba(255,255,255,.6)'}
+              fontSize="12" fontFamily="Anton,sans-serif"
+              className="turn-flow-badge">
               {i + 1}
             </text>
           </g>
@@ -458,22 +490,26 @@ function ActivityFeed({ items }: { items: ActivityEvent[] }) {
 function PlayerCorner({
   player, active, remaining, total, position, isMe, lastReaction,
 }: {
-  player: { id: string; name: string; avatarColor: string; handCount?: number };
+  player: {
+    id: string; name: string; avatarColor: string;
+    handCount?: number; tableUp?: Card[]; tableDownCount?: number;
+  };
   active: boolean; remaining: number; total: number;
   position: 'north' | 'south' | 'west' | 'east';
   isMe?: boolean;
   lastReaction?: { id: number; kind: string } | null;
 }) {
   const cardCount = (player as PlayerView).handCount ?? 0;
+  const tableUp = player.tableUp ?? [];
+  const tableDownCount = player.tableDownCount ?? 0;
   return (
     <div className={`player-corner player-${position}`}>
       <div className="player-cluster">
-        {active && !isMe && (
-          <div className="timer-wrap">
-            <TimerRing remaining={remaining} total={total} size={108} />
-          </div>
-        )}
         <div className={`avatar${active ? ' avatar-active' : ''}`}>
+          {/* Anillo-timer sobre el avatar cuando es su turno */}
+          {active && !isMe && (
+            <AvatarTimerRing remaining={remaining} total={total} />
+          )}
           <div className="avatar-disc" style={{ background: player.avatarColor }}>
             {player.name[0]}
           </div>
@@ -483,6 +519,10 @@ function PlayerCorner({
           <div className="player-name">{player.name}</div>
         </div>
       </div>
+      {/* Mini mesa del oponente — siempre visible cuando hay cartas */}
+      {!isMe && (
+        <OpponentMesa tableUp={tableUp} tableDownCount={tableDownCount} />
+      )}
       {lastReaction && (
         <div key={lastReaction.id} className="player-last-react">
           <TwEmoji emoji={reactionEmoji(lastReaction.kind)} size={40} />
@@ -529,7 +569,7 @@ function Pozo({ topCard, pileCount, dropHover, justSlammed }: {
       <div className="pozo-stack">
         {stack.map((s) => (
           <div key={s.i} className="pozo-under"
-               style={{ transform: `translate(${s.x}px,${s.y}px) rotate(${s.rot}deg)`, zIndex: s.i + 1 }}>
+            style={{ transform: `translate(${s.x}px,${s.y}px) rotate(${s.rot}deg)`, zIndex: s.i + 1 }}>
             <PozoUnderCard index={s.i} />
           </div>
         ))}
@@ -554,7 +594,7 @@ function Pozo({ topCard, pileCount, dropHover, justSlammed }: {
             <div className="pozo-meter-marks">
               {POZO_TIERS.map((tt, k) => (
                 <span key={k} className={`pozo-meter-mark${k <= tier ? ' on' : ''}`}
-                      style={{ left: `${Math.min(100, (tt.min / 18) * 100)}%` }} />
+                  style={{ left: `${Math.min(100, (tt.min / 18) * 100)}%` }} />
               ))}
             </div>
           </div>
@@ -624,12 +664,12 @@ function HandFan({ cards, selectedIds, draggingIdx, onPointerDownCard, isMyTurn 
           const inactive = !isMyTurn && !isSel;
           return (
             <div key={c.id}
-                 className={`hand-slot${isSel ? ' hand-slot-sel' : ''}${isDragging ? ' hand-slot-dragging' : ''}${inactive ? ' hand-slot-inactive' : ''}`}
-                 style={{
-                   transform: `translateX(${offset * spacing}px) translateY(${Math.abs(offset) * 5 + (isSel ? -28 : 0)}px) rotate(${offset * tiltPer}deg)`,
-                   zIndex: isSel ? 100 : 10 + i,
-                 }}
-                 onPointerDown={(e) => onPointerDownCard(i, e)}>
+              className={`hand-slot${isSel ? ' hand-slot-sel' : ''}${isDragging ? ' hand-slot-dragging' : ''}${inactive ? ' hand-slot-inactive' : ''}`}
+              style={{
+                transform: `translateX(${offset * spacing}px) translateY(${Math.abs(offset) * 5 + (isSel ? -28 : 0)}px) rotate(${offset * tiltPer}deg)`,
+                zIndex: isSel ? 100 : 10 + i,
+              }}
+              onPointerDown={(e) => onPointerDownCard(i, e)}>
               <CardFace card={c} lifted={isSel} dim={inactive} />
             </div>
           );
@@ -656,7 +696,7 @@ function HandActions({ canPlay, onPlay, onClear, onTake }: {
         </button>
       )}
       <button className={`btn-play${canPlay ? '' : ' btn-play-disabled'}`}
-              onClick={onPlay} disabled={!canPlay}>
+        onClick={onPlay} disabled={!canPlay}>
         <span>TIRAR</span><span className="btn-play-arrow">▸</span>
       </button>
       <button className="btn-ghost" onClick={onTake}>
@@ -699,7 +739,7 @@ function EpicBlindReveal({ visible }: { visible: boolean }) {
       setShown(true);
       setTimeout(() => setShow(false), 2200);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
   if (!show) return null;
   return (
@@ -714,47 +754,117 @@ function EpicBlindReveal({ visible }: { visible: boolean }) {
   );
 }
 
-// ─── SelfTableCards ───────────────────────────────────────────────────────────
+// ─── OpponentMesa ─────────────────────────────────────────────────────────────
+// Mini tarjetitas (20×28 px) que muestran las cartas de mesa de un oponente.
 
-function SelfTableCards({ self, selectedIds, onToggle, isMyTurn, onPlay }: {
+const SUIT_COLORS_MINI: Record<string, string> = {
+  oros: '#E8FF3D', copas: '#FF2244', espadas: '#9DE5FF', bastos: '#FF6A1A',
+};
+
+function OpponentMesa({ tableUp, tableDownCount }: {
+  tableUp: Card[]; tableDownCount: number;
+}) {
+  if (tableUp.length === 0 && tableDownCount === 0) return null;
+  const upSlots = [...tableUp, ...Array.from({ length: Math.max(0, 4 - tableUp.length) }, () => null)];
+  return (
+    <div className="opp-mesa">
+      {/* Fila boca-arriba */}
+      <div className="opp-mesa-row">
+        {upSlots.map((card, i) =>
+          card ? (
+            <div key={card.id} className="opp-mesa-card opp-mesa-card-face"
+              style={{ color: SUIT_COLORS_MINI[card.suit] ?? '#f5f0e8' }}>
+              {card.rank}
+            </div>
+          ) : (
+            <div key={i} className="opp-mesa-card opp-mesa-card-empty" />
+          )
+        )}
+      </div>
+      {/* Fila boca-abajo (ciegas) */}
+      <div className="opp-mesa-row">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className={`opp-mesa-card ${i < tableDownCount ? 'opp-mesa-card-back' : 'opp-mesa-card-empty'}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── PlayerZone ───────────────────────────────────────────────────────────────
+// Layout Opción C con collapse: solo la franja activa se expande a full size.
+// Las franjas inactivas colapsan a un strip de ~34px con pip indicators.
+
+function PlayerZone({
+  self, selectedIds, onToggle, isMyTurn, onPlay, draggingIdx, onPointerDownCard,
+}: {
   self: SelfView; selectedIds: string[]; onToggle: (id: string) => void;
   isMyTurn: boolean; onPlay: () => void;
+  draggingIdx: number; onPointerDownCard: (idx: number, e: React.PointerEvent) => void;
 }) {
+  const inHandPhase = self.hand.length > 0;
+  const inUpPhase = self.hand.length === 0 && self.tableUp.length > 0;
   const inBlindPhase = self.hand.length === 0 && self.tableUp.length === 0 && self.tableDownCount > 0;
-  const inUpPhase    = self.hand.length === 0 && self.tableUp.length > 0;
 
-  // Fase boca-arriba (mesa visible)
-  if (inUpPhase) {
+  // ── Strip de ciegas (siempre que no sea la fase activa) ──────────────────
+  const CiegasStrip = () => {
+    const depleted = self.tableDownCount === 0;
     return (
-      <div className="table-cards-wrap">
-        <div className="table-phase-label">MESA</div>
-        <div className="table-cards-row">
-          {self.tableUp.map(c => (
-            <CardFace key={c.id} card={c} size="hand"
-              selected={selectedIds.includes(c.id)}
-              onClick={() => isMyTurn && onToggle(c.id)} dim={!isMyTurn} />
+      <div className={`mesa-strip-compact mesa-strip-ciegas${depleted ? ' mesa-strip-depleted' : ''}`}>
+        <span className="mesa-strip-label">↓ CIEGAS</span>
+        <div className="mesa-strip-pips">
+          {Array.from({ length: 4 }, (_, i) => (
+            i < self.tableDownCount
+              ? <div key={i} className="mesa-pip-back" />
+              : <div key={i} className="mesa-pip-empty" />
           ))}
+        </div>
+        <span style={{ marginLeft: 6, fontSize: 9, fontFamily: 'JetBrains Mono,monospace', color: 'rgba(246,239,222,.3)', letterSpacing: 1 }}>
+          {self.tableDownCount}
+        </span>
+      </div>
+    );
+  };
+
+  // ── Strip de arriba (siempre que no sea la fase activa) ──────────────────
+  const ArribaStrip = () => {
+    const depleted = self.tableUp.length === 0;
+    // Rellenar hasta 4 slots
+    const slots = [
+      ...self.tableUp,
+      ...Array.from({ length: Math.max(0, 4 - self.tableUp.length) }, () => null),
+    ];
+    return (
+      <div className={`mesa-strip-compact mesa-strip-arriba${depleted ? ' mesa-strip-depleted' : ''}`}>
+        <span className="mesa-strip-label">↑ ARRIBA</span>
+        <div className="mesa-strip-pips">
+          {slots.map((c, i) =>
+            c ? (
+              <div key={c.id} className="mesa-pip-face"
+                style={{ color: SUIT_COLORS_MINI[c.suit] ?? '#0e0b08' }}>
+                {c.rank}
+              </div>
+            ) : (
+              <div key={i} className="mesa-pip-empty" />
+            )
+          )}
         </div>
       </div>
     );
-  }
+  };
 
-  // Fase ciega — la más dramática
-  if (inBlindPhase) {
-    return (
-      <>
-        <EpicBlindReveal visible />
-        <div className={`blind-phase-wrap${isMyTurn ? ' blind-phase-my-turn' : ''}`}>
-          <div className="blind-phase-header">
-            <span className="blind-phase-icon">⚠</span>
-            <span>CARTAS DESCONOCIDAS</span>
-            <span className="blind-phase-icon">⚠</span>
-          </div>
-          <div className="blind-cards-row">
+  return (
+    <div className="player-zone">
+
+      {/* ── FASE CIEGA activa: franja completa ── */}
+      {inBlindPhase ? (
+        <div className="mesa-franja mesa-franja-ciegas mesa-franja-phase-active">
+          <span className="mesa-franja-label">↓ CIEGAS</span>
+          <div className="mesa-franja-cards">
             {self.tableDown.map((cb, idx) => (
               <div
                 key={cb.id}
-                className={`blind-card-mystery${isMyTurn ? ' blind-card-active' : ''}`}
+                className={`blind-card-mystery blind-card-sm${isMyTurn ? ' blind-card-active' : ''}`}
                 onClick={() => isMyTurn && onPlay()}
                 style={{ animationDelay: `${idx * 0.12}s` }}
                 title={isMyTurn ? '¡Toca para revelar!' : undefined}
@@ -763,19 +873,60 @@ function SelfTableCards({ self, selectedIds, onToggle, isMyTurn, onPlay }: {
                 {isMyTurn && <div className="blind-card-pulse-ring" />}
               </div>
             ))}
+            {Array.from({ length: Math.max(0, 4 - self.tableDown.length) }, (_, i) => (
+              <div key={`e${i}`} className="mesa-slot-empty" />
+            ))}
           </div>
-          {isMyTurn && (
-            <div className="blind-flip-hint">
-              <span className="blind-flip-arrow">↑</span>
-              ¡TOCA PARA REVELAR!
-            </div>
-          )}
+          {isMyTurn && <span className="mesa-blind-hint">↑ TOCA</span>}
         </div>
-      </>
-    );
-  }
+      ) : (
+        /* Strip colapsado cuando ciegas no son la fase activa */
+        <CiegasStrip />
+      )}
 
-  return null;
+      {/* ── FASE ARRIBA activa: franja completa ── */}
+      {inUpPhase ? (
+        <div className="mesa-franja mesa-franja-arriba mesa-franja-phase-active">
+          <span className="mesa-franja-label">↑ ARRIBA</span>
+          <div className="mesa-franja-cards">
+            {self.tableUp.map(c => (
+              <CardFace
+                key={c.id} card={c} size="small"
+                selected={selectedIds.includes(c.id)}
+                onClick={isMyTurn ? () => onToggle(c.id) : undefined}
+              />
+            ))}
+            {Array.from({ length: Math.max(0, 4 - self.tableUp.length) }, (_, i) => (
+              <div key={`e${i}`} className="mesa-slot-empty" />
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* Strip colapsado cuando arriba no es la fase activa */
+        <ArribaStrip />
+      )}
+
+      {/* ── MANO: franja completa cuando es la fase activa, vacía si no ── */}
+      {inHandPhase ? (
+        <div className="mesa-franja mesa-franja-mano mesa-franja-phase-active">
+          <HandFan
+            cards={self.hand}
+            selectedIds={selectedIds}
+            draggingIdx={draggingIdx}
+            onPointerDownCard={onPointerDownCard}
+            isMyTurn={isMyTurn}
+          />
+        </div>
+      ) : (
+        <div className="mesa-franja mesa-franja-mano">
+          <div className="mesa-mano-empty">—</div>
+        </div>
+      )}
+
+      {/* Overlay épico al entrar a la fase ciega */}
+      {inBlindPhase && <EpicBlindReveal visible />}
+    </div>
+  );
 }
 
 // ─── SelfReactionBar — panel de reacciones en la zona del jugador ────────────
@@ -920,12 +1071,12 @@ function GameEndScreen() {
   const socketId = useGameStore(s => s.socketId);
   if (!gameEnd) return null;
   const isWinner = socketId === gameEnd.winnerId;
-  const isLoser  = socketId === gameEnd.loserId && !isWinner;
+  const isLoser = socketId === gameEnd.loserId && !isWinner;
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
       <div style={{ textAlign: 'center', background: 'rgba(14,11,8,.97)', border: `1px solid ${isWinner ? 'rgba(232,255,61,.5)' : isLoser ? 'rgba(255,34,68,.5)' : 'rgba(255,106,26,.3)'}`, borderRadius: 16, padding: '48px 56px', maxWidth: 460, width: 'calc(100vw - 32px)' }}>
         {isWinner && <><div style={{ fontFamily: 'Anton,sans-serif', fontSize: 42, color: '#E8FF3D', letterSpacing: 4, textShadow: '0 0 30px #E8FF3D' }}>GANASTE</div></>}
-        {isLoser  && <><div style={{ fontFamily: 'Anton,sans-serif', fontSize: 42, color: '#FF2244', letterSpacing: 4 }}>SHITHEAD</div></>}
+        {isLoser && <><div style={{ fontFamily: 'Anton,sans-serif', fontSize: 42, color: '#FF2244', letterSpacing: 4 }}>SHITHEAD</div></>}
         {!isWinner && !isLoser && <div style={{ fontFamily: 'Anton,sans-serif', fontSize: 42, color: '#FF6A1A', letterSpacing: 4 }}>FIN</div>}
         <div style={{ margin: '20px 0 24px', padding: '12px 20px', background: 'rgba(232,255,61,.07)', border: '1px solid rgba(232,255,61,.2)', borderRadius: 10 }}>
           <div style={{ fontSize: 22, fontFamily: 'Anton,sans-serif', color: '#E8FF3D', letterSpacing: 2 }}>🥇 {gameEnd.winnerName}</div>
@@ -957,12 +1108,12 @@ function Notifications() {
 // ─── GAMEBOARD PRINCIPAL ──────────────────────────────────────────────────────
 
 export function GameBoard() {
-  const gameView          = useGameStore(s => s.gameView);
-  const socketId          = useGameStore(s => s.socketId);
-  const interceptActive   = useGameStore(s => s.interceptActive);
-  const selectedCardIds   = useGameStore(s => s.selectedCardIds);
-  const toggleCardSel     = useGameStore(s => s.toggleCardSelection);
-  const clearSel          = useGameStore(s => s.clearSelection);
+  const gameView = useGameStore(s => s.gameView);
+  const socketId = useGameStore(s => s.socketId);
+  const interceptActive = useGameStore(s => s.interceptActive);
+  const selectedCardIds = useGameStore(s => s.selectedCardIds);
+  const toggleCardSel = useGameStore(s => s.toggleCardSelection);
+  const clearSel = useGameStore(s => s.clearSelection);
   const floatingReactions = useGameStore(s => s.floatingReactions);
 
   const { playSelected, takePile, flipBlind, startGame, isMyTurn } = usePlayCard();
@@ -980,10 +1131,10 @@ export function GameBoard() {
   const [gordoActive, setGordoActive] = useState(false);
 
   // Track previous top card to detect special card plays
-  const prevTopCardId    = useRef<string | null>(null);
+  const prevTopCardId = useRef<string | null>(null);
   const specialAnimTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Track lastActivity length to detect new events
-  const prevActivityLen  = useRef(0);
+  const prevActivityLen = useRef(0);
 
   // Velocity tracking for flick gesture
   const velHistory = useRef<Array<{ x: number; y: number; t: number }>>([]);
@@ -1008,9 +1159,9 @@ export function GameBoard() {
     prevTopCardId.current = top.id;
     const kind: SpecialKind | null =
       top.rank === '10' ? 'burn' :
-      top.rank === '2'  ? 'reset' :
-      top.rank === '7'  ? 'block' :
-      top.rank === 'A'  ? 'ace'   : null;
+        top.rank === '2' ? 'reset' :
+          top.rank === '7' ? 'block' :
+            top.rank === 'A' ? 'ace' : null;
     if (kind) {
       if (specialAnimTimer.current) clearTimeout(specialAnimTimer.current);
       setSpecialAnim(kind);
@@ -1048,7 +1199,7 @@ export function GameBoard() {
         }
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameView?.lastActivity]);
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────────
@@ -1060,7 +1211,7 @@ export function GameBoard() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCardIds]);
 
   // ── Drag / Flick handler ────────────────────────────────────────────────────
@@ -1076,7 +1227,7 @@ export function GameBoard() {
       x: e.clientX, y: e.clientY,
       sx: e.clientX, sy: e.clientY,
       ox: e.clientX - (rect.left + rect.width / 2),
-      oy: e.clientY - (rect.top  + rect.height / 2),
+      oy: e.clientY - (rect.top + rect.height / 2),
       moved: false, overDrop: false, flickReady: false,
     });
   }, [gameView]);
@@ -1117,10 +1268,10 @@ export function GameBoard() {
       let flicked = false;
       if (recent.length >= 2) {
         const first = recent[0]!;
-        const last  = recent[recent.length - 1]!;
-        const dt    = Math.max(last.t - first.t, 1);
-        const vy    = (last.y - first.y) / dt; // px/ms — negative = upward
-        const vx    = (last.x - first.x) / dt;
+        const last = recent[recent.length - 1]!;
+        const dt = Math.max(last.t - first.t, 1);
+        const vy = (last.y - first.y) / dt; // px/ms — negative = upward
+        const vx = (last.x - first.x) / dt;
         const speed = Math.sqrt(vx * vx + vy * vy);
         // Flick: upward velocity > 0.4 px/ms AND fast enough
         flicked = vy < -0.4 && speed > 0.35;
@@ -1142,14 +1293,14 @@ export function GameBoard() {
 
     const onCancel = () => { setDrag(null); velHistory.current = []; };
     window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup',   onUp);
+    window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onCancel);
     return () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup',   onUp);
+      window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onCancel);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drag]);
 
   const handlePlay = () => {
@@ -1166,8 +1317,8 @@ export function GameBoard() {
     if (!p) return;
     const positions: Record<string, { x: number; y: number }> = {
       north: { x: window.innerWidth / 2, y: 160 },
-      west:  { x: 200, y: window.innerHeight / 2 },
-      east:  { x: window.innerWidth - 200, y: window.innerHeight / 2 },
+      west: { x: 200, y: window.innerHeight / 2 },
+      east: { x: window.innerWidth - 200, y: window.innerHeight / 2 },
     };
     const oppIdx = gameView!.opponents.indexOf(p);
     const pos = positions[POSITIONS[oppIdx % 3]!] ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
@@ -1231,33 +1382,25 @@ export function GameBoard() {
       {/* ── Opponent corners ──────────────────────────────── */}
       {opponents.map((opp, i) => (
         <PlayerCorner key={opp.id} player={opp}
-                      active={currentPlayerId === opp.id}
-                      remaining={timerRemaining} total={TURN_SECONDS}
-                      position={POSITIONS[i % 3]!}
-                      lastReaction={lastReacts[opp.id] ?? null} />
+          active={currentPlayerId === opp.id}
+          remaining={timerRemaining} total={TURN_SECONDS}
+          position={POSITIONS[i % 3]!}
+          lastReaction={lastReacts[opp.id] ?? null} />
       ))}
 
       {/* ── Center: deck + pozo or lobby ─────────────────── */}
       {phase === 'lobby' ? (
         <InviteLobbyPanel roomId={roomId} players={opponents}
-                          selfName={self?.name ?? ''} selfColor={self?.avatarColor ?? '#FF6A1A'} />
+          selfName={self?.name ?? ''} selfColor={self?.avatarColor ?? '#FF6A1A'} />
       ) : (
         <div className="center-table">
           <DeckStack deckCount={deckCount} onClick={takePile} />
           <Pozo topCard={discardTopCard} pileCount={discardPileCount}
-                dropHover={dropHover} justSlammed={slamPulse} />
+            dropHover={dropHover} justSlammed={slamPulse} />
         </div>
       )}
 
-      {/* ── Turn timer ────────────────────────────────────── */}
-      {phase === 'playing' && turnStartedAt > 0 && (
-        <div style={{ position: 'absolute', top: '50%', right: 20, transform: 'translateY(-50%)', zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-          <TimerRing remaining={timerRemaining} total={TURN_SECONDS} size={56} />
-          <div style={{ fontSize: 8, fontFamily: 'JetBrains Mono,monospace', letterSpacing: 1, color: currentPlayerId === socketId ? '#E8FF3D' : 'rgba(246,239,222,.3)' }}>
-            {currentPlayerId === socketId ? 'JUEGA!' : 'TURNO'}
-          </div>
-        </div>
-      )}
+      {/* Turn timer global eliminado: cada avatar muestra su propio anillo */}
 
       {/* ── Intercept ─────────────────────────────────────── */}
       <InterceptFlashOverlay active={interceptActive} />
@@ -1268,9 +1411,9 @@ export function GameBoard() {
         <div className="bottom-bar">
           <div className="me-zone">
             <PlayerCorner player={{ id: self.id, name: self.name, avatarColor: self.avatarColor }}
-                          active={currentPlayerId === self.id}
-                          remaining={timerRemaining} total={TURN_SECONDS}
-                          position="south" isMe />
+              active={currentPlayerId === self.id}
+              remaining={timerRemaining} total={TURN_SECONDS}
+              position="south" isMe />
             {currentPlayerId === self.id && phase === 'playing' && (
               <div className="me-turn-badge">
                 <TimerRing remaining={timerRemaining} total={TURN_SECONDS} size={40} />
@@ -1286,17 +1429,15 @@ export function GameBoard() {
             )}
           </div>
 
-          {self.hand.length === 0 && (
-            <SelfTableCards self={self} selectedIds={selectedCardIds}
-                            onToggle={toggleCardSel} isMyTurn={isMyTurn} onPlay={handlePlay} />
-          )}
-
-          {self.hand.length > 0 && (
-            <HandFan cards={self.hand} selectedIds={selectedCardIds}
-                     draggingIdx={drag && drag.moved ? drag.idx : -1}
-                     onPointerDownCard={handleCardPointerDown}
-                     isMyTurn={isMyTurn} />
-          )}
+          <PlayerZone
+            self={self}
+            selectedIds={selectedCardIds}
+            onToggle={toggleCardSel}
+            isMyTurn={isMyTurn}
+            onPlay={handlePlay}
+            draggingIdx={drag && drag.moved ? drag.idx : -1}
+            onPointerDownCard={handleCardPointerDown}
+          />
 
           {phase === 'playing' && (
             <HandActions
@@ -1314,7 +1455,7 @@ export function GameBoard() {
       {/* ── Drag ghost ────────────────────────────────────── */}
       {drag && drag.moved && (
         <div className={`drag-ghost${drag.overDrop ? ' drag-ghost-over' : ''}`}
-             style={{ left: drag.x - drag.ox, top: drag.y - drag.oy }}>
+          style={{ left: drag.x - drag.ox, top: drag.y - drag.oy }}>
           <CardFace card={drag.card} size="hand" glow={drag.overDrop || drag.flickReady} />
           {drag.overDrop && <div className="drag-ghost-drop-cue">SOLTAR</div>}
         </div>
@@ -1331,10 +1472,9 @@ export function GameBoard() {
       {/* ── Reaction floaters ─────────────────────────────── */}
       {localReactions.map(r => (
         <ReactionFloater key={r.id} {...r}
-                         onDone={() => setLocalReactions(rs => rs.filter(x => x.id !== r.id))} />
+          onDone={() => setLocalReactions(rs => rs.filter(x => x.id !== r.id))} />
       ))}
-
-      {/* ── Store floating reactions (from other players via socket) ── */}
+      {/* Store floating reactions (from other players via socket) */}
       {floatingReactions.map(r => (
         <div key={r.id} style={{ position: 'absolute', left: `${r.x}%`, bottom: '22%', animation: 'float-up 2.8s ease-out forwards', pointerEvents: 'none', zIndex: 180 }}>
           <div style={{ fontSize: 44, lineHeight: 1, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,.6))' }}>{r.emoji}</div>
@@ -1342,26 +1482,25 @@ export function GameBoard() {
         </div>
       ))}
 
-            {/* ── Special card animation ────────────── */}
+      {/* Special card animation */}
       {specialAnim && <SpecialCardAnim kind={specialAnim} />}
 
-      {/* ── Steal banner ────────── */}
+      {/* Steal banner */}
       {steal && <StealBanner stealer={steal.stealer} victim={steal.victim} onDone={() => setSteal(null)} />}
 
-      {/* ── Punishment overlay ────── */}
-      {punish && <PunishmentOverlay victim={punish.victim} cardCount={punish.cardCount}
-                                    onDismiss={() => setPunish(null)} />}
+      {/* Punishment overlay */}
+      {punish && <PunishmentOverlay victim={punish.victim} cardCount={punish.cardCount} onDismiss={() => setPunish(null)} />}
 
-      {/* ── Gordo Glotón ─────────── */}
+      {/* Gordo Gloton */}
       {gordoActive && <GordoGloton onDone={() => setGordoActive(false)} />}
 
-      {/* ── Notifications ────────── */}
+      {/* Notifications */}
       <Notifications />
 
-      {/* ── Game End ───────────── */}
+      {/* Game End */}
       <GameEndScreen />
 
-      {/* ── Watermark ─────────── */}
+      {/* Watermark */}
       <Watermark />
     </div>
   );

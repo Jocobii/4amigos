@@ -1,95 +1,138 @@
-'use client';
+"use client";
 
-import { useCallback, useState } from 'react';
-import { connectSocket } from '@/src/shared/api/socket';
-import { useGameStore } from '@/src/entities/game';
+import { useCallback, useState } from "react";
+import { connectSocket } from "@/src/shared/api/socket";
+import { useGameStore } from "@/src/entities/game";
 
 export function useJoinRoom() {
-  const [isLoading, setIsLoading] = useState(false);
-  const { setRoom, setConnectionStatus, setSocketId, setGameView, setGameEnd,
-          handlePlayResult, handleInterceptResult, addNotification, addFloatingReaction, reset } = useGameStore();
+	const [isLoading, setIsLoading] = useState(false);
+	const {
+		setRoom,
+		setConnectionStatus,
+		setSocketId,
+		setGameView,
+		setGameEnd,
+		handlePlayResult,
+		handleInterceptResult,
+		addNotification,
+		addFloatingReaction,
+		reset,
+	} = useGameStore();
 
-  const joinRoom = useCallback((roomId: string, playerName: string) => {
-    setIsLoading(true);
-    setConnectionStatus('connecting');
+	const joinRoom = useCallback(
+		(roomId: string, playerName: string) => {
+			setIsLoading(true);
+			setConnectionStatus("connecting");
 
-    const socket = connectSocket();
+			const socket = connectSocket();
 
-    socket.off('connect');
-    socket.off('disconnect');
-    socket.off('ROOM_STATE');
-    socket.off('GAME_START');
-    socket.off('GAME_END');
-    socket.off('GAME_RESTARTED');
-    socket.off('PLAY_RESULT');
-    socket.off('INTERCEPT_RESULT');
-    socket.off('ERROR');
-    socket.off('PLAYER_REACTION');
+			socket.off("connect");
+			socket.off("disconnect");
+			socket.off("CONNECTED");
+			socket.off("ROOM_STATE");
+			socket.off("GAME_START");
+			socket.off("GAME_END");
+			socket.off("GAME_RESTARTED");
+			socket.off("PLAY_RESULT");
+			socket.off("INTERCEPT_RESULT");
+			socket.off("ERROR");
+			socket.off("PLAYER_REACTION");
 
-    socket.on('connect', () => {
-      setConnectionStatus('connected');
-      setSocketId(socket.id ?? null);
-      socket.emit('JOIN_ROOM', { roomId: roomId.toUpperCase().trim(), playerName: playerName.trim() });
-      setIsLoading(false);
-    });
+			// El servidor envia CONNECTED con el playerId asignado (reemplaza socket.io id)
+			socket.on("CONNECTED", (payload) => {
+				const { playerId } = payload as { playerId: string };
+				setSocketId(playerId);
+			});
 
-    socket.on('disconnect', () => {
-      setConnectionStatus('disconnected');
-      addNotification('warning', 'Conexion perdida. Reconectando...');
-    });
+			socket.on("connect", () => {
+				setConnectionStatus("connected");
+				socket.emit("JOIN_ROOM", {
+					roomId: roomId.toUpperCase().trim(),
+					playerName: playerName.trim(),
+				});
+				setIsLoading(false);
+			});
 
-    socket.on('ROOM_STATE', ({ view }) => {
-      // Clock-skew correction: convert server-relative turnStartedAt to local clock.
-      // serverElapsedMs = how many ms ago the server started this turn.
-      // clientAdjustedStart = what client's Date.now() would be for that same moment.
-      const serverElapsedMs = Math.max(0, view.serverNow - view.turnStartedAt);
-      const adjustedView = {
-        ...view,
-        turnStartedAt: Date.now() - serverElapsedMs,
-      };
-      setGameView(adjustedView);
-      setRoom(view.roomId, playerName.trim());
-    });
+			socket.on("disconnect", () => {
+				setConnectionStatus("disconnected");
+				addNotification("warning", "Conexion perdida. Reconectando...");
+			});
 
-    socket.on('GAME_START', ({ roomId: rid }) => {
-      addNotification('info', 'La partida en la sala ' + rid + ' ha comenzado!');
-    });
+			socket.on("ROOM_STATE", ({ view }) => {
+				const serverElapsedMs = Math.max(
+					0,
+					view.serverNow - view.turnStartedAt,
+				);
+				const adjustedView = {
+					...view,
+					turnStartedAt: Date.now() - serverElapsedMs,
+				};
+				setGameView(adjustedView);
+				setRoom(view.roomId, playerName.trim());
+			});
 
-    socket.on('GAME_END', (payload) => {
-      setGameEnd(payload);
-    });
+			socket.on("GAME_START", ({ roomId: rid }) => {
+				addNotification(
+					"info",
+					"La partida en la sala " + rid + " ha comenzado!",
+				);
+			});
 
-    socket.on('GAME_RESTARTED', () => {
-      reset();
-      addNotification('info', 'Nueva partida! Volviendo al lobby...');
-      socket.emit('JOIN_ROOM', { roomId: roomId.toUpperCase().trim(), playerName: playerName.trim() });
-    });
+			socket.on("GAME_END", (payload) => {
+				setGameEnd(payload);
+			});
 
-    socket.on('PLAY_RESULT', (result) => {
-      handlePlayResult(result);
-    });
+			socket.on("GAME_RESTARTED", () => {
+				reset();
+				addNotification("info", "Nueva partida! Volviendo al lobby...");
+				socket.emit("JOIN_ROOM", {
+					roomId: roomId.toUpperCase().trim(),
+					playerName: playerName.trim(),
+				});
+			});
 
-    socket.on('INTERCEPT_RESULT', (result) => {
-      handleInterceptResult(result);
-    });
+			socket.on("PLAY_RESULT", (result) => {
+				handlePlayResult(result);
+			});
 
-    socket.on('PLAYER_REACTION', ({ playerId, playerName, playerColor, emoji }) => {
-      addFloatingReaction(emoji, playerName, playerColor);
-    });
+			socket.on("INTERCEPT_RESULT", (result) => {
+				handleInterceptResult(result);
+			});
 
-    socket.on('ERROR', ({ message }) => {
-      addNotification('error', message);
-      setIsLoading(false);
-    });
+			socket.on(
+				"PLAYER_REACTION",
+				({ playerId, playerName, playerColor, emoji }) => {
+					addFloatingReaction(emoji, playerName, playerColor);
+				},
+			);
 
-    if (socket.connected) {
-      setConnectionStatus('connected');
-      setSocketId(socket.id ?? null);
-      socket.emit('JOIN_ROOM', { roomId: roomId.toUpperCase().trim(), playerName: playerName.trim() });
-      setIsLoading(false);
-    }
-  }, [setRoom, setConnectionStatus, setSocketId, setGameView, setGameEnd,
-      handlePlayResult, handleInterceptResult, addNotification, addFloatingReaction, reset]);
+			socket.on("ERROR", ({ message }) => {
+				addNotification("error", message);
+				setIsLoading(false);
+			});
 
-  return { joinRoom, isLoading };
+			if (socket.connected) {
+				setConnectionStatus("connected");
+				socket.emit("JOIN_ROOM", {
+					roomId: roomId.toUpperCase().trim(),
+					playerName: playerName.trim(),
+				});
+				setIsLoading(false);
+			}
+		},
+		[
+			setRoom,
+			setConnectionStatus,
+			setSocketId,
+			setGameView,
+			setGameEnd,
+			handlePlayResult,
+			handleInterceptResult,
+			addNotification,
+			addFloatingReaction,
+			reset,
+		],
+	);
+
+	return { joinRoom, isLoading };
 }
