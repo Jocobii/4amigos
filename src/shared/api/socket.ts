@@ -124,9 +124,22 @@ class WsSocket {
 
 const RAW_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'ws://localhost:3001';
 
-const SERVER_URL = RAW_URL
-  .replace(/^http:\/\//, 'ws://')
-  .replace(/^https:\/\//, 'wss://');
+// Normaliza la URL: solo origin (protocolo + host + puerto), sin path ni query.
+// Convierte http(s):// → ws(s):// para WebSocket nativo.
+function toWsOrigin(raw: string): string {
+  try {
+    const url = new URL(raw);
+    const proto = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${proto}//${url.host}`;
+  } catch {
+    // Si no es una URL válida, solo reemplaza el protocolo como fallback.
+    return raw
+      .replace(/^http:\/\//, 'ws://')
+      .replace(/^https:\/\//, 'wss://');
+  }
+}
+
+const SERVER_URL = toWsOrigin(RAW_URL);
 
 let socket: WsSocket | null = null;
 
