@@ -38,19 +38,24 @@ export function useJoinRoom() {
 			socket.off("ERROR");
 			socket.off("PLAYER_REACTION");
 
-			// El servidor envia CONNECTED con el playerId asignado (reemplaza socket.io id)
+			// El servidor emite CONNECTED en cuanto abre la conexión WS.
+			// Es más fiable que el evento "connect" (onopen) del singleton,
+			// que puede no re-dispararse si el socket ya estaba abierto.
 			socket.on("CONNECTED", (payload) => {
 				const { playerId } = payload as { playerId: string };
 				setSocketId(playerId);
-			});
-
-			socket.on("connect", () => {
 				setConnectionStatus("connected");
 				socket.emit("JOIN_ROOM", {
 					roomId: roomId.toUpperCase().trim(),
 					playerName: playerName.trim(),
 				});
 				setIsLoading(false);
+			});
+
+			// Fallback: si el WS ya estaba abierto (singleton reconectado),
+			// CONNECTED no vuelve a llegar — enviamos JOIN_ROOM directamente.
+			socket.on("connect", () => {
+				setConnectionStatus("connected");
 			});
 
 			socket.on("disconnect", () => {
