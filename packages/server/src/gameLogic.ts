@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { nanoid } from 'nanoid';
+import { config } from './config.js';
 import type {
   Card, CardBack, Player, GameState, Rank, Suit,
   DiscardPile, InterceptState, TurnConstraint, ActivityEvent, ActivityKind,
@@ -50,8 +51,8 @@ export function createDoubleDeck(): Card[] {
 export function createInitialGameState(
   players: Array<{ id: string; name: string }>,
 ): GameState {
-  if (players.length < 2 || players.length > 4) {
-    throw new Error('Se requieren entre 2 y 4 jugadores');
+  if (players.length < config.minPlayers || players.length > 4) {
+    throw new Error(`Se requieren entre ${config.minPlayers} y 4 jugadores`);
   }
 
   const deck = createDoubleDeck();
@@ -666,3 +667,4 @@ export function buildGameStateView(
     serverNow: Date.now(),
   };
 }
+

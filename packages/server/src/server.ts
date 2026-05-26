@@ -9,46 +9,44 @@
 // gameLogic.ts y roomManager.ts permanecen intactos.
 // =============================================================================
 
-import http from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
-import { nanoid } from 'nanoid';
+import http from "http";
+import { WebSocketServer, WebSocket } from "ws";
+import { nanoid } from "nanoid";
 
 import type {
-  JoinRoomPayload,
-  PlayCardPayload,
-  InterceptTurnPayload,
-  FlipBlindPayload,
-} from './types/game.js';
+	JoinRoomPayload,
+	PlayCardPayload,
+	InterceptTurnPayload,
+	FlipBlindPayload,
+} from "./types/game.js";
 
 import {
-  joinRoom,
-  startGame,
-  handleDisconnect,
-  getRoom,
-  buildRoomViews,
-  purgeExpiredRooms,
-  getRoomStats,
-  resetRoom,
-} from './roomManager.js';
+	joinRoom,
+	startGame,
+	handleDisconnect,
+	getRoom,
+	buildRoomViews,
+	purgeExpiredRooms,
+	getRoomStats,
+	resetRoom,
+} from "./roomManager.js";
 
-import {
-  playCard,
-  takePile,
-  interceptTurn,
-} from './gameLogic.js';
+import { playCard, takePile, interceptTurn } from "./gameLogic.js";
+
+import { config } from "./config.js";
 
 // ─────────────────────────── Config ──────────────────────────────────────────
 
-const PORT = parseInt(process.env['PORT'] ?? '3001', 10);
+const PORT = parseInt(process.env["PORT"] ?? "3001", 10);
 const MAX_PLAYERS = 4;
 const TURN_TIMEOUT_MS = 17_000;
 
 // ─────────────────────────── Estructuras de conexión ─────────────────────────
 
 interface ClientData {
-  playerId: string;
-  playerName: string;
-  roomId: string;
+	playerId: string;
+	playerName: string;
+	roomId: string;
 }
 
 /** ws → datos del cliente */
@@ -62,37 +60,45 @@ const roomSockets = new Map<string, Set<string>>();
 
 /** Envía un evento JSON a un ws específico. */
 function send(ws: WebSocket, event: string, payload?: unknown): void {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ event, payload: payload ?? null }));
-  }
+	if (ws.readyState === WebSocket.OPEN) {
+		ws.send(JSON.stringify({ event, payload: payload ?? null }));
+	}
 }
 
 /** Envía un evento JSON a un jugador por su id. */
-function sendToPlayer(playerId: string, event: string, payload?: unknown): void {
-  const ws = idMap.get(playerId);
-  if (ws) send(ws, event, payload);
+function sendToPlayer(
+	playerId: string,
+	event: string,
+	payload?: unknown,
+): void {
+	const ws = idMap.get(playerId);
+	if (ws) send(ws, event, payload);
 }
 
 /** Emite un evento a todos los jugadores de una sala. */
-function broadcastToRoom(roomId: string, event: string, payload?: unknown): void {
-  const ids = roomSockets.get(roomId);
-  if (!ids) return;
-  for (const id of ids) {
-    sendToPlayer(id, event, payload);
-  }
+function broadcastToRoom(
+	roomId: string,
+	event: string,
+	payload?: unknown,
+): void {
+	const ids = roomSockets.get(roomId);
+	if (!ids) return;
+	for (const id of ids) {
+		sendToPlayer(id, event, payload);
+	}
 }
 
 /** Agrega un playerId a la sala (equivalente a socket.join). */
 function joinSocketRoom(roomId: string, playerId: string): void {
-  if (!roomSockets.has(roomId)) roomSockets.set(roomId, new Set());
-  roomSockets.get(roomId)!.add(playerId);
+	if (!roomSockets.has(roomId)) roomSockets.set(roomId, new Set());
+	roomSockets.get(roomId)!.add(playerId);
 }
 
 /** Elimina un playerId de todas las salas. */
 function leaveAllRooms(playerId: string): void {
-  for (const [, members] of roomSockets) {
-    members.delete(playerId);
-  }
+	for (const [, members] of roomSockets) {
+		members.delete(playerId);
+	}
 }
 
 // ─────────────────────────── Turn Timer ──────────────────────────────────────
@@ -100,453 +106,505 @@ function leaveAllRooms(playerId: string): void {
 const roomTurnTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function resetTurnTimer(roomId: string): void {
-  const prev = roomTurnTimers.get(roomId);
-  if (prev) clearTimeout(prev);
+	const prev = roomTurnTimers.get(roomId);
+	if (prev) clearTimeout(prev);
 
-  const timer = setTimeout(() => {
-    const room = getRoom(roomId);
-    if (!room || room.gameState.phase !== 'playing') return;
+	const timer = setTimeout(() => {
+		const room = getRoom(roomId);
+		if (!room || room.gameState.phase !== "playing") return;
 
-    const currentPlayer = room.gameState.players[room.gameState.currentPlayerIndex];
-    if (!currentPlayer) return;
+		const currentPlayer =
+			room.gameState.players[room.gameState.currentPlayerIndex];
+		if (!currentPlayer) return;
 
-    console.log(`[Room ${roomId}] Tiempo agotado — auto-penalizando a ${currentPlayer.name}`);
+		console.log(
+			`[Room ${roomId}] Tiempo agotado — auto-penalizando a ${currentPlayer.name}`,
+		);
 
-    const result = takePile(room.gameState, currentPlayer.id);
-    if (result.ok) {
-      sendToPlayer(currentPlayer.id, 'PLAY_RESULT', {
-        success: true,
-        code: 'took_pile',
-        message: 'Tiempo agotado — recogiste el pozo',
-        penaltyApplied: true,
-      });
-      emitRoomState(roomId);
-      resetTurnTimer(roomId);
-    }
-  }, TURN_TIMEOUT_MS);
+		const result = takePile(room.gameState, currentPlayer.id);
+		if (result.ok) {
+			sendToPlayer(currentPlayer.id, "PLAY_RESULT", {
+				success: true,
+				code: "took_pile",
+				message: "Tiempo agotado — recogiste el pozo",
+				penaltyApplied: true,
+			});
+			emitRoomState(roomId);
+			resetTurnTimer(roomId);
+		}
+	}, TURN_TIMEOUT_MS);
 
-  roomTurnTimers.set(roomId, timer);
+	roomTurnTimers.set(roomId, timer);
 }
 
 function cancelTurnTimer(roomId: string): void {
-  const timer = roomTurnTimers.get(roomId);
-  if (timer) {
-    clearTimeout(timer);
-    roomTurnTimers.delete(roomId);
-  }
+	const timer = roomTurnTimers.get(roomId);
+	if (timer) {
+		clearTimeout(timer);
+		roomTurnTimers.delete(roomId);
+	}
 }
 
 // ─────────────────────────── Helper: emitir estado sanitizado ─────────────────
 
 function emitRoomState(roomId: string): void {
-  const room = getRoom(roomId);
-  if (!room) return;
+	const room = getRoom(roomId);
+	if (!room) return;
 
-  const views = buildRoomViews(room);
-  for (const [playerId, view] of views.entries()) {
-    sendToPlayer(playerId, 'ROOM_STATE', { view });
-  }
+	const views = buildRoomViews(room);
+	for (const [playerId, view] of views.entries()) {
+		sendToPlayer(playerId, "ROOM_STATE", { view });
+	}
 }
 
 function emitGameEnd(roomId: string): void {
-  const room = getRoom(roomId);
-  if (!room) return;
+	const room = getRoom(roomId);
+	if (!room) return;
 
-  const players = room.gameState.players;
-  const ordered = room.gameState.finishOrder.map((id, idx) => {
-    const p = players.find(pl => pl.id === id);
-    return { id, name: p?.name ?? '?', rank: idx + 1 };
-  });
+	const players = room.gameState.players;
+	const ordered = room.gameState.finishOrder.map((id, idx) => {
+		const p = players.find((pl) => pl.id === id);
+		return { id, name: p?.name ?? "?", rank: idx + 1 };
+	});
 
-  const winner = ordered[0];
-  const loser = ordered[ordered.length - 1];
+	const winner = ordered[0];
+	const loser = ordered[ordered.length - 1];
 
-  broadcastToRoom(roomId, 'GAME_END', {
-    finishOrder: ordered,
-    winnerId: winner?.id ?? '',
-    winnerName: winner?.name ?? '?',
-    loserId: loser?.id ?? '',
-    loserName: loser?.name ?? '?',
-  });
+	broadcastToRoom(roomId, "GAME_END", {
+		finishOrder: ordered,
+		winnerId: winner?.id ?? "",
+		winnerName: winner?.name ?? "?",
+		loserId: loser?.id ?? "",
+		loserName: loser?.name ?? "?",
+	});
 
-  console.log(`[Room ${roomId}] Fin de partida — Ganador: ${winner?.name} | Shithead: ${loser?.name}`);
+	console.log(
+		`[Room ${roomId}] Fin de partida — Ganador: ${winner?.name} | Shithead: ${loser?.name}`,
+	);
 }
 
 // ─────────────────────────── Validación de entrada ───────────────────────────
 
 function isValidRoomId(id: unknown): id is string {
-  return typeof id === 'string' && /^[A-Z0-9]{2,10}$/.test(id.trim());
+	return typeof id === "string" && /^[A-Z0-9]{2,10}$/.test(id.trim());
 }
 
 function isValidPlayerName(name: unknown): name is string {
-  return typeof name === 'string' && name.trim().length >= 1 && name.trim().length <= 30;
+	return (
+		typeof name === "string" &&
+		name.trim().length >= 1 &&
+		name.trim().length <= 30
+	);
 }
 
 function isValidCardIds(ids: unknown): ids is string[] {
-  return (
-    Array.isArray(ids) &&
-    ids.length >= 1 &&
-    ids.length <= 4 &&
-    ids.every(id => typeof id === 'string' && id.length > 0)
-  );
+	return (
+		Array.isArray(ids) &&
+		ids.length >= 1 &&
+		ids.length <= 4 &&
+		ids.every((id) => typeof id === "string" && id.length > 0)
+	);
 }
 
 // ─────────────────────────── Manejadores de mensajes ─────────────────────────
 
-function handleMessage(ws: WebSocket, playerId: string, event: string, payload: unknown): void {
-  const data = clientMap.get(ws);
+function handleMessage(
+	ws: WebSocket,
+	playerId: string,
+	event: string,
+	payload: unknown,
+): void {
+	const data = clientMap.get(ws);
 
-  // ── JOIN_ROOM ────────────────────────────────────────────────────────────────
-  if (event === 'JOIN_ROOM') {
-    const { roomId, playerName } = (payload ?? {}) as Partial<JoinRoomPayload>;
+	// ── JOIN_ROOM ────────────────────────────────────────────────────────────────
+	if (event === "JOIN_ROOM") {
+		const { roomId, playerName } = (payload ?? {}) as Partial<JoinRoomPayload>;
 
-    if (!isValidRoomId(roomId)) {
-      send(ws, 'ERROR', { code: 'INVALID_ROOM_ID', message: 'ID de sala inválido (usa solo letras y números)' });
-      return;
-    }
-    if (!isValidPlayerName(playerName)) {
-      send(ws, 'ERROR', { code: 'INVALID_NAME', message: 'Nombre inválido (1-30 caracteres)' });
-      return;
-    }
+		if (!isValidRoomId(roomId)) {
+			send(ws, "ERROR", {
+				code: "INVALID_ROOM_ID",
+				message: "ID de sala inválido (usa solo letras y números)",
+			});
+			return;
+		}
+		if (!isValidPlayerName(playerName)) {
+			send(ws, "ERROR", {
+				code: "INVALID_NAME",
+				message: "Nombre inválido (1-30 caracteres)",
+			});
+			return;
+		}
 
-    const trimmedRoom = roomId.trim().toUpperCase();
-    const result = joinRoom(trimmedRoom, playerId, playerName!.trim());
+		const trimmedRoom = roomId.trim().toUpperCase();
+		const result = joinRoom(trimmedRoom, playerId, playerName!.trim());
 
-    if ('error' in result) {
-      send(ws, 'ERROR', { code: 'JOIN_FAILED', message: result.error });
-      return;
-    }
+		if ("error" in result) {
+			send(ws, "ERROR", { code: "JOIN_FAILED", message: result.error });
+			return;
+		}
 
-    const { room } = result;
+		const { room } = result;
 
-    // Actualizar datos del cliente
-    const clientData: ClientData = {
-      playerId,
-      playerName: playerName!.trim(),
-      roomId: trimmedRoom,
-    };
-    clientMap.set(ws, clientData);
-    joinSocketRoom(trimmedRoom, playerId);
+		// Actualizar datos del cliente
+		const clientData: ClientData = {
+			playerId,
+			playerName: playerName!.trim(),
+			roomId: trimmedRoom,
+		};
+		clientMap.set(ws, clientData);
+		joinSocketRoom(trimmedRoom, playerId);
 
-    console.log(`[Room ${trimmedRoom}] "${playerName}" se unió (${room.gameState.players.length}/${MAX_PLAYERS})`);
+		console.log(
+			`[Room ${trimmedRoom}] "${playerName}" se unió (${room.gameState.players.length}/${MAX_PLAYERS})`,
+		);
 
-    emitRoomState(trimmedRoom);
+		emitRoomState(trimmedRoom);
 
-    // Auto-iniciar si la sala está llena
-    if (
-      room.gameState.players.length >= MAX_PLAYERS &&
-      room.gameState.phase === 'lobby'
-    ) {
-      const startResult = startGame(trimmedRoom);
-      if (startResult.ok) {
-        const playerOrder = startResult.room.gameState.players.map(p => ({
-          id: p.id,
-          name: p.name,
-          seatIndex: p.seatIndex,
-        }));
-        broadcastToRoom(trimmedRoom, 'GAME_START', { roomId: trimmedRoom, playerOrder });
-        emitRoomState(trimmedRoom);
-        resetTurnTimer(trimmedRoom);
-        console.log(`[Room ${trimmedRoom}] Partida iniciada automáticamente (sala llena)`);
-      }
-    }
-    return;
-  }
+		// Auto-iniciar si la sala está llena
+		if (
+			room.gameState.players.length >= MAX_PLAYERS &&
+			room.gameState.phase === "lobby"
+		) {
+			const startResult = startGame(trimmedRoom);
+			if (startResult.ok) {
+				const playerOrder = startResult.room.gameState.players.map((p) => ({
+					id: p.id,
+					name: p.name,
+					seatIndex: p.seatIndex,
+				}));
+				broadcastToRoom(trimmedRoom, "GAME_START", {
+					roomId: trimmedRoom,
+					playerOrder,
+				});
+				emitRoomState(trimmedRoom);
+				resetTurnTimer(trimmedRoom);
+				console.log(
+					`[Room ${trimmedRoom}] Partida iniciada automáticamente (sala llena)`,
+				);
+			}
+		}
+		return;
+	}
 
-  // Los handlers siguientes requieren estar en una sala
-  if (!data?.roomId) {
-    send(ws, 'ERROR', { code: 'NOT_IN_ROOM', message: 'No estás en ninguna sala' });
-    return;
-  }
+	// Los handlers siguientes requieren estar en una sala
+	if (!data?.roomId) {
+		send(ws, "ERROR", {
+			code: "NOT_IN_ROOM",
+			message: "No estás en ninguna sala",
+		});
+		return;
+	}
 
-  const roomId = data.roomId;
+	const roomId = data.roomId;
 
-  // ── READY ────────────────────────────────────────────────────────────────────
-  if (event === 'READY') {
-    const room = getRoom(roomId);
-    if (!room) {
-      send(ws, 'ERROR', { code: 'ROOM_NOT_FOUND', message: 'Sala no encontrada' });
-      return;
-    }
-    if (room.gameState.phase !== 'lobby') {
-      send(ws, 'ERROR', { code: 'ALREADY_STARTED', message: 'La partida ya inició' });
-      return;
-    }
-    if (room.gameState.players.length < 2) {
-      send(ws, 'ERROR', {
-        code: 'NOT_ENOUGH_PLAYERS',
-        message: `Se necesitan al menos 2 jugadores (ahora hay ${room.gameState.players.length})`,
-      });
-      return;
-    }
+	// ── READY ────────────────────────────────────────────────────────────────────
+	if (event === "READY") {
+		const room = getRoom(roomId);
+		if (!room) {
+			send(ws, "ERROR", {
+				code: "ROOM_NOT_FOUND",
+				message: "Sala no encontrada",
+			});
+			return;
+		}
+		if (room.gameState.phase !== "lobby") {
+			send(ws, "ERROR", {
+				code: "ALREADY_STARTED",
+				message: "La partida ya inició",
+			});
+			return;
+		}
+		if (room.gameState.players.length < config.minPlayers) {
+			send(ws, "ERROR", {
+				code: "NOT_ENOUGH_PLAYERS",
+				message: `Se necesitan al menos ${config.minPlayers} jugador(es) para iniciar`,
+			});
+			return;
+		}
 
-    const startResult = startGame(roomId);
-    if (!startResult.ok) {
-      send(ws, 'ERROR', { code: 'START_FAILED', message: startResult.error });
-      return;
-    }
+		const startResult = startGame(roomId);
+		if (!startResult.ok) {
+			send(ws, "ERROR", { code: "START_FAILED", message: startResult.error });
+			return;
+		}
 
-    const playerOrder = startResult.room.gameState.players.map(p => ({
-      id: p.id,
-      name: p.name,
-      seatIndex: p.seatIndex,
-    }));
+		const playerOrder = startResult.room.gameState.players.map((p) => ({
+			id: p.id,
+			name: p.name,
+			seatIndex: p.seatIndex,
+		}));
 
-    broadcastToRoom(roomId, 'GAME_START', { roomId, playerOrder });
-    emitRoomState(roomId);
-    resetTurnTimer(roomId);
-    console.log(`[Room ${roomId}] Partida iniciada manualmente`);
-    return;
-  }
+		broadcastToRoom(roomId, "GAME_START", { roomId, playerOrder });
+		emitRoomState(roomId);
+		resetTurnTimer(roomId);
+		console.log(`[Room ${roomId}] Partida iniciada manualmente`);
+		return;
+	}
 
-  // ── PLAY_CARD ────────────────────────────────────────────────────────────────
-  if (event === 'PLAY_CARD') {
-    const { cardIds } = (payload ?? {}) as Partial<PlayCardPayload>;
-    if (!isValidCardIds(cardIds)) {
-      send(ws, 'PLAY_RESULT', {
-        success: false,
-        code: 'invalid_card',
-        message: 'Payload inválido: cardIds debe ser un array de 1-4 strings',
-      });
-      return;
-    }
+	// ── PLAY_CARD ────────────────────────────────────────────────────────────────
+	if (event === "PLAY_CARD") {
+		const { cardIds } = (payload ?? {}) as Partial<PlayCardPayload>;
+		if (!isValidCardIds(cardIds)) {
+			send(ws, "PLAY_RESULT", {
+				success: false,
+				code: "invalid_card",
+				message: "Payload inválido: cardIds debe ser un array de 1-4 strings",
+			});
+			return;
+		}
 
-    const room = getRoom(roomId);
-    if (!room) return;
+		const room = getRoom(roomId);
+		if (!room) return;
 
-    const result = playCard(room.gameState, playerId, cardIds);
+		const result = playCard(room.gameState, playerId, cardIds);
 
-    if (!result.ok) {
-      send(ws, 'PLAY_RESULT', {
-        success: false,
-        code: result.code,
-        message: result.message,
-      });
-      return;
-    }
+		if (!result.ok) {
+			send(ws, "PLAY_RESULT", {
+				success: false,
+				code: result.code,
+				message: result.message,
+			});
+			return;
+		}
 
-    send(ws, 'PLAY_RESULT', {
-      success: true,
-      code: 'ok',
-      message: result.burned ? '¡Pozo quemado! 🔥' : 'Carta jugada',
-    });
+		send(ws, "PLAY_RESULT", {
+			success: true,
+			code: "ok",
+			message: result.burned ? "¡Pozo quemado! 🔥" : "Carta jugada",
+		});
 
-    emitRoomState(roomId);
+		emitRoomState(roomId);
 
-    if (result.gameOver || room.gameState.phase === 'finished') {
-      cancelTurnTimer(roomId);
-      emitGameEnd(roomId);
-    } else {
-      resetTurnTimer(roomId);
-    }
-    return;
-  }
+		if (result.gameOver || room.gameState.phase === "finished") {
+			cancelTurnTimer(roomId);
+			emitGameEnd(roomId);
+		} else {
+			resetTurnTimer(roomId);
+		}
+		return;
+	}
 
-  // ── TAKE_PILE ────────────────────────────────────────────────────────────────
-  if (event === 'TAKE_PILE') {
-    const room = getRoom(roomId);
-    if (!room) return;
+	// ── TAKE_PILE ────────────────────────────────────────────────────────────────
+	if (event === "TAKE_PILE") {
+		const room = getRoom(roomId);
+		if (!room) return;
 
-    const result = takePile(room.gameState, playerId);
+		const result = takePile(room.gameState, playerId);
 
-    if (!result.ok) {
-      send(ws, 'PLAY_RESULT', {
-        success: false,
-        code: result.code,
-        message: result.message,
-      });
-      return;
-    }
+		if (!result.ok) {
+			send(ws, "PLAY_RESULT", {
+				success: false,
+				code: result.code,
+				message: result.message,
+			});
+			return;
+		}
 
-    send(ws, 'PLAY_RESULT', {
-      success: true,
-      code: 'took_pile',
-      message: 'Recogiste el pozo 💀',
-      penaltyApplied: true,
-    });
+		send(ws, "PLAY_RESULT", {
+			success: true,
+			code: "took_pile",
+			message: "Recogiste el pozo 💀",
+			penaltyApplied: true,
+		});
 
-    emitRoomState(roomId);
-    return;
-  }
+		emitRoomState(roomId);
+		return;
+	}
 
-  // ── FLIP_BLIND ───────────────────────────────────────────────────────────────
-  if (event === 'FLIP_BLIND') {
-    const { cardId } = (payload ?? {}) as Partial<FlipBlindPayload>;
-    if (typeof cardId !== 'string' || !cardId) {
-      send(ws, 'ERROR', { code: 'INVALID_PAYLOAD', message: 'cardId inválido' });
-      return;
-    }
+	// ── FLIP_BLIND ───────────────────────────────────────────────────────────────
+	if (event === "FLIP_BLIND") {
+		const { cardId } = (payload ?? {}) as Partial<FlipBlindPayload>;
+		if (typeof cardId !== "string" || !cardId) {
+			send(ws, "ERROR", {
+				code: "INVALID_PAYLOAD",
+				message: "cardId inválido",
+			});
+			return;
+		}
 
-    const room = getRoom(roomId);
-    if (!room) return;
+		const room = getRoom(roomId);
+		if (!room) return;
 
-    const result = playCard(room.gameState, playerId, [cardId]);
+		const result = playCard(room.gameState, playerId, [cardId]);
 
-    if (!result.ok) {
-      send(ws, 'PLAY_RESULT', {
-        success: false,
-        code: result.code,
-        message: result.message,
-      });
-      return;
-    }
+		if (!result.ok) {
+			send(ws, "PLAY_RESULT", {
+				success: false,
+				code: result.code,
+				message: result.message,
+			});
+			return;
+		}
 
-    send(ws, 'PLAY_RESULT', { success: true, code: 'ok', message: 'Carta ciega volteada' });
-    emitRoomState(roomId);
+		send(ws, "PLAY_RESULT", {
+			success: true,
+			code: "ok",
+			message: "Carta ciega volteada",
+		});
+		emitRoomState(roomId);
 
-    if (result.gameOver || room.gameState.phase === 'finished') {
-      cancelTurnTimer(roomId);
-      emitGameEnd(roomId);
-    } else {
-      resetTurnTimer(roomId);
-    }
-    return;
-  }
+		if (result.gameOver || room.gameState.phase === "finished") {
+			cancelTurnTimer(roomId);
+			emitGameEnd(roomId);
+		} else {
+			resetTurnTimer(roomId);
+		}
+		return;
+	}
 
-  // ── INTERCEPT_TURN ───────────────────────────────────────────────────────────
-  if (event === 'INTERCEPT_TURN') {
-    const { cardIds } = (payload ?? {}) as Partial<InterceptTurnPayload>;
-    const interceptorName = data.playerName ?? 'Jugador';
+	// ── INTERCEPT_TURN ───────────────────────────────────────────────────────────
+	if (event === "INTERCEPT_TURN") {
+		const { cardIds } = (payload ?? {}) as Partial<InterceptTurnPayload>;
+		const interceptorName = data.playerName ?? "Jugador";
 
-    if (!isValidCardIds(cardIds)) {
-      send(ws, 'INTERCEPT_RESULT', {
-        success: false,
-        interceptorId: playerId,
-        interceptorName,
-        message: 'Payload inválido',
-        penaltyApplied: false,
-      });
-      return;
-    }
+		if (!isValidCardIds(cardIds)) {
+			send(ws, "INTERCEPT_RESULT", {
+				success: false,
+				interceptorId: playerId,
+				interceptorName,
+				message: "Payload inválido",
+				penaltyApplied: false,
+			});
+			return;
+		}
 
-    const room = getRoom(roomId);
-    if (!room) return;
+		const room = getRoom(roomId);
+		if (!room) return;
 
-    const result = interceptTurn(room.gameState, playerId, cardIds);
+		const result = interceptTurn(room.gameState, playerId, cardIds);
 
-    if (!result.ok) {
-      broadcastToRoom(roomId, 'INTERCEPT_RESULT', {
-        success: false,
-        interceptorId: playerId,
-        interceptorName,
-        penaltyApplied: result.penaltyApplied,
-        message: result.message,
-      });
-      emitRoomState(roomId);
-      return;
-    }
+		if (!result.ok) {
+			broadcastToRoom(roomId, "INTERCEPT_RESULT", {
+				success: false,
+				interceptorId: playerId,
+				interceptorName,
+				penaltyApplied: result.penaltyApplied,
+				message: result.message,
+			});
+			emitRoomState(roomId);
+			return;
+		}
 
-    broadcastToRoom(roomId, 'INTERCEPT_RESULT', {
-      success: true,
-      interceptorId: playerId,
-      interceptorName,
-      message: `⚡ ¡${interceptorName} robó el turno!`,
-    });
+		broadcastToRoom(roomId, "INTERCEPT_RESULT", {
+			success: true,
+			interceptorId: playerId,
+			interceptorName,
+			message: `⚡ ¡${interceptorName} robó el turno!`,
+		});
 
-    emitRoomState(roomId);
-    resetTurnTimer(roomId);
-    console.log(`[Room ${roomId}] Intercepción exitosa por ${interceptorName}`);
-    return;
-  }
+		emitRoomState(roomId);
+		resetTurnTimer(roomId);
+		console.log(`[Room ${roomId}] Intercepción exitosa por ${interceptorName}`);
+		return;
+	}
 
-  // ── SEND_REACTION ────────────────────────────────────────────────────────────
-  if (event === 'SEND_REACTION') {
-    const emoji = typeof (payload as any)?.emoji === 'string'
-      ? (payload as any).emoji.slice(0, 8).trim()
-      : null;
-    if (!emoji) return;
+	// ── SEND_REACTION ────────────────────────────────────────────────────────────
+	if (event === "SEND_REACTION") {
+		const emoji =
+			typeof (payload as any)?.emoji === "string"
+				? (payload as any).emoji.slice(0, 8).trim()
+				: null;
+		if (!emoji) return;
 
-    const room = getRoom(roomId);
-    const player = room?.gameState.players.find(p => p.id === playerId);
-    const playerColor = player?.avatarColor ?? '#FF6A1A';
+		const room = getRoom(roomId);
+		const player = room?.gameState.players.find((p) => p.id === playerId);
+		const playerColor = player?.avatarColor ?? "#FF6A1A";
 
-    broadcastToRoom(roomId, 'PLAYER_REACTION', {
-      playerId,
-      playerName: data.playerName ?? 'Jugador',
-      playerColor,
-      emoji,
-    });
-    return;
-  }
+		broadcastToRoom(roomId, "PLAYER_REACTION", {
+			playerId,
+			playerName: data.playerName ?? "Jugador",
+			playerColor,
+			emoji,
+		});
+		return;
+	}
 
-  // ── RESTART_GAME ─────────────────────────────────────────────────────────────
-  if (event === 'RESTART_GAME') {
-    const result = resetRoom(roomId);
-    if (!result.ok) {
-      send(ws, 'ERROR', { code: 'restart_failed', message: result.error });
-      return;
-    }
+	// ── RESTART_GAME ─────────────────────────────────────────────────────────────
+	if (event === "RESTART_GAME") {
+		const result = resetRoom(roomId);
+		if (!result.ok) {
+			send(ws, "ERROR", { code: "restart_failed", message: result.error });
+			return;
+		}
 
-    cancelTurnTimer(roomId);
-    broadcastToRoom(roomId, 'GAME_RESTARTED', null);
-    emitRoomState(roomId);
-    console.log(`[Room ${roomId}] Partida reiniciada`);
-    return;
-  }
+		cancelTurnTimer(roomId);
+		broadcastToRoom(roomId, "GAME_RESTARTED", null);
+		emitRoomState(roomId);
+		console.log(`[Room ${roomId}] Partida reiniciada`);
+		return;
+	}
 
-  console.warn(`[WS] Evento desconocido: "${event}" de ${playerId}`);
+	console.warn(`[WS] Evento desconocido: "${event}" de ${playerId}`);
 }
 
 // ─────────────────────────── HTTP Server (health) ─────────────────────────────
 
 const httpServer = http.createServer((req, res) => {
-  if (req.url === '/health' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, ...getRoomStats(), timestamp: Date.now() }));
-    return;
-  }
-  res.writeHead(404);
-  res.end();
+	if (req.url === "/health" && req.method === "GET") {
+		res.writeHead(200, { "Content-Type": "application/json" });
+		res.end(
+			JSON.stringify({ ok: true, ...getRoomStats(), timestamp: Date.now() }),
+		);
+		return;
+	}
+	res.writeHead(404);
+	res.end();
 });
 
 // ─────────────────────────── WebSocket Server ────────────────────────────────
 
 const wss = new WebSocketServer({ server: httpServer });
 
-wss.on('connection', (ws) => {
-  const playerId = nanoid(12);
-  idMap.set(playerId, ws);
+wss.on("connection", (ws) => {
+	const playerId = nanoid(12);
+	idMap.set(playerId, ws);
 
-  // Datos del cliente vacíos hasta recibir JOIN_ROOM
-  clientMap.set(ws, { playerId, playerName: '', roomId: '' });
+	// Datos del cliente vacíos hasta recibir JOIN_ROOM
+	clientMap.set(ws, { playerId, playerName: "", roomId: "" });
 
-  console.log(`[WS] Conexión: ${playerId}`);
+	console.log(`[WS] Conexión: ${playerId}`);
 
-  // Enviar el playerId asignado al cliente para que lo conozca
-  send(ws, 'CONNECTED', { playerId });
+	// Enviar el playerId asignado al cliente para que lo conozca
+	send(ws, "CONNECTED", { playerId });
 
-  ws.on('message', (raw) => {
-    let parsed: { event: string; payload?: unknown };
+	ws.on("message", (raw) => {
+		let parsed: { event: string; payload?: unknown };
 
-    try {
-      parsed = JSON.parse(raw.toString());
-    } catch {
-      send(ws, 'ERROR', { code: 'INVALID_JSON', message: 'El mensaje no es JSON válido' });
-      return;
-    }
+		try {
+			parsed = JSON.parse(raw.toString());
+		} catch {
+			send(ws, "ERROR", {
+				code: "INVALID_JSON",
+				message: "El mensaje no es JSON válido",
+			});
+			return;
+		}
 
-    const { event, payload } = parsed;
-    if (typeof event !== 'string') {
-      send(ws, 'ERROR', { code: 'MISSING_EVENT', message: 'Falta el campo "event"' });
-      return;
-    }
+		const { event, payload } = parsed;
+		if (typeof event !== "string") {
+			send(ws, "ERROR", {
+				code: "MISSING_EVENT",
+				message: 'Falta el campo "event"',
+			});
+			return;
+		}
 
-    handleMessage(ws, playerId, event, payload);
-  });
+		handleMessage(ws, playerId, event, payload);
+	});
 
-  ws.on('close', (code, reason) => {
-    console.log(`[WS] Desconexión: ${playerId} — código: ${code}`);
-    idMap.delete(playerId);
-    clientMap.delete(ws);
-    leaveAllRooms(playerId);
+	ws.on("close", (code, reason) => {
+		console.log(`[WS] Desconexión: ${playerId} — código: ${code}`);
+		idMap.delete(playerId);
+		clientMap.delete(ws);
+		leaveAllRooms(playerId);
 
-    const { roomId } = handleDisconnect(playerId);
-    if (roomId) emitRoomState(roomId);
-  });
+		const { roomId } = handleDisconnect(playerId);
+		if (roomId) emitRoomState(roomId);
+	});
 
-  ws.on('error', (err) => {
-    console.error(`[WS] Error en ${playerId}:`, err.message);
-  });
+	ws.on("error", (err) => {
+		console.error(`[WS] Error en ${playerId}:`, err.message);
+	});
 });
 
 // ─────────────────────────── Tareas periódicas ───────────────────────────────
@@ -556,9 +614,9 @@ setInterval(purgeExpiredRooms, 30 * 60 * 1000);
 // ─────────────────────────── Arranque ────────────────────────────────────────
 
 httpServer.listen(PORT, () => {
-  console.log(`\n[4 Amigos] — Servidor autoritario (WS puro)`);
-  console.log(`    Puerto : ${PORT}`);
-  console.log(`    Modo   : ${process.env['NODE_ENV'] ?? 'development'}\n`);
+	console.log(`\n[4 Amigos] — Servidor autoritario (WS puro)`);
+	console.log(`    Puerto : ${PORT}`);
+	console.log(`    Modo   : ${process.env["NODE_ENV"] ?? "development"}\n`);
 });
 
 export { wss, httpServer };
