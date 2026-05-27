@@ -127,10 +127,10 @@ function TimerRing({ remaining, total, size = 92 }: { remaining: number; total: 
 
 function AvatarTimerRing({ remaining, total }: { remaining: number; total: number }) {
   const size = 84; // avatar 72px + 6px padding cada lado
-  const sw   = 4;
-  const r    = (size - sw) / 2;
-  const C    = 2 * Math.PI * r;
-  const pct  = Math.max(0, Math.min(1, remaining / total));
+  const sw = 4;
+  const r = (size - sw) / 2;
+  const C = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(1, remaining / total));
   const stroke = remaining <= 1 ? '#FF2244' : remaining <= 3 ? '#FF6A1A' : '#E8FF3D';
   const danger = remaining <= 3;
   return (
@@ -142,14 +142,14 @@ function AvatarTimerRing({ remaining, total }: { remaining: number; total: numbe
     >
       {/* Track tenue */}
       <circle cx={size / 2} cy={size / 2} r={r}
-              fill="none" stroke="rgba(255,255,255,.1)" strokeWidth={sw} />
+        fill="none" stroke="rgba(255,255,255,.1)" strokeWidth={sw} />
       {/* Arco de progreso */}
       <circle cx={size / 2} cy={size / 2} r={r}
-              fill="none" stroke={stroke} strokeWidth={sw}
-              strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
-              strokeLinecap="round"
-              transform={`rotate(-90 ${size / 2} ${size / 2})`}
-              style={{ transition: 'stroke-dashoffset .2s linear, stroke .3s' }} />
+        fill="none" stroke={stroke} strokeWidth={sw}
+        strokeDasharray={C} strokeDashoffset={C * (1 - pct)}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        style={{ transition: 'stroke-dashoffset .2s linear, stroke .3s' }} />
     </svg>
   );
 }

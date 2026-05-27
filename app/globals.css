@@ -1,6 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ═══════════════════════════════════════════════════════
    4 AMIGOS — Design System
    Urban backyard / late-night patio aesthetic.
@@ -4131,4 +4136,137 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+@layer utilities {
+
+  /* =========================================================================
+     MECÁNICA DEL ABANICO MOTORIZADA POR GPU (MOBILE-FIRST)
+     ========================================================================= */
+  .hand-slot {
+    /* El espaciado e inclinación se adaptan según el ancho del dispositivo */
+    --spacing: clamp(20px, 5.5vw, 46px);
+    --tilt: clamp(2.2deg, 0.7vw, 4.2deg);
+
+    transform:
+      translateX(calc(var(--offset) * var(--spacing))) translateY(calc(abs(var(--offset)) * 4.5px + (var(--is-sel) * -24px))) rotate(calc(var(--offset) * var(--tilt)));
+  }
+
+  .turn-flow-pulse-arrow {
+    animation: turn-flow-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@layer components {
+
+  /* Forzar que los textos grandes del juego queden responsivos fluidos */
+  .hud-brand {
+    font-size: clamp(1.2rem, 4vw, 2rem);
+  }
+
+  /* Ajustes para que la mesa central no desborde en pantallas cortas */
+  .mesa-centro-container {
+    max-width: clamp(280px, 85vw, 440px);
+  }
+}
+
+/* =========================================================================
+   ANIMACIONES CLAVE ORIGINALES Y CORRECCIONES
+   ========================================================================= */
+@keyframes turn-flow-pulse {
+
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.1) translateY(-2px);
+    opacity: 1;
+  }
+}
+
+.reaction-float {
+  position: absolute;
+  animation: floatUp 1.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 50;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+
+  15% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(calc(-100px + var(--drift))) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.timer-danger {
+  animation: ring-shake 0.2s ease-in-out infinite alternate;
+}
+
+@keyframes ring-shake {
+  0% {
+    transform: rotate(-90deg) translateX(-1px);
+  }
+
+  100% {
+    transform: rotate(-90deg) translateX(1px);
+  }
+}
+
+@media (max-width: 768px) {
+
+  /* CENTRAR EL MAZO / POZO */
+  .center-table {
+    left: 50%;
+    transform: translateX(-50%);
+    top: 38%;
+    gap: 18px;
+  }
+
+  /* BARRA INFERIOR */
+  .bottom-bar {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 0 10px 18px;
+    gap: 10px;
+  }
+
+  /* MANO */
+  .hand-wrap {
+    width: 100%;
+    max-width: 360px;
+    height: 140px;
+  }
+
+  .hand-fan {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* PLAYER INFO */
+  .me-zone {
+    justify-self: start;
+    width: 100%;
+    transform: scale(.9);
+    transform-origin: left bottom;
+  }
+
+  /* BOTONES */
+  .hand-actions {
+    justify-self: center;
+    justify-content: center;
+    width: 100%;
+  }
 }
