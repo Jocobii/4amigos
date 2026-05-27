@@ -4227,46 +4227,115 @@ body {
 
 @media (max-width: 768px) {
 
-  /* CENTRAR EL MAZO / POZO */
+  /* =========================
+     CENTRO DE MESA
+  ========================== */
+
   .center-table {
-    left: 50%;
-    transform: translateX(-50%);
-    top: 38%;
-    gap: 18px;
+    gap: 8px;
+    top: 47%;
+    transform: translate(-50%, -50%);
   }
 
-  /* BARRA INFERIOR */
-  .bottom-bar {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    padding: 0 10px 18px;
-    gap: 10px;
+  /* =========================
+     MAZO MÁS CHICO
+  ========================== */
+
+  .deck-stack {
+    width: 62px;
+    height: 92px;
   }
 
-  /* MANO */
-  .hand-wrap {
-    width: 100%;
-    max-width: 360px;
-    height: 140px;
+  .deck-card,
+  .deck-card-1,
+  .deck-card-2,
+  .deck-card-3 {
+    width: 62px;
+    height: 92px;
   }
 
-  .hand-fan {
-    width: 100%;
-    justify-content: center;
+  /* =========================
+     POZO MÁS CHICO
+  ========================== */
+
+  .pozo {
+    width: 92px;
+    height: 92px;
+    margin-top: 26px;
   }
 
-  /* PLAYER INFO */
-  .me-zone {
-    justify-self: start;
-    width: 100%;
-    transform: scale(.9);
-    transform-origin: left bottom;
+  .pozo-stack,
+  .pozo-under,
+  .pozo-top {
+    width: 62px;
+    height: 92px;
   }
 
-  /* BOTONES */
-  .hand-actions {
-    justify-self: center;
-    justify-content: center;
-    width: 100%;
+  .pozo-under-card,
+  .pozo-top .card {
+    width: 62px !important;
+    height: 92px !important;
+  }
+
+  /* =========================
+     CARTA DEL POZO
+  ========================== */
+
+  .pozo-top .card .card-rank {
+    font-size: 18px;
+  }
+
+  .pozo-top .card .card-big-suit {
+    font-size: 34px;
+  }
+
+  .pozo-top .card .card-suit {
+    font-size: 11px;
+  }
+
+  /* =========================
+     CONTADORES
+  ========================== */
+
+  .deck-count {
+    font-size: 10px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+  }
+
+  .pozo-foot {
+    top: -42px;
+    transform: scale(.72);
+  }
+
+  .pozo-count-num {
+    font-size: 18px;
+  }
+
+  /* =========================
+     AURA MÁS PEQUEÑA
+  ========================== */
+
+  .pozo-aura {
+    width: 140px !important;
+    height: 140px !important;
+    opacity: .45;
+  }
+
+  .pozo-aura-2 {
+    filter: blur(14px);
+  }
+
+  /* =========================
+     JUGADORES LATERALES
+  ========================== */
+
+  .player-east {
+    right: 4px;
+  }
+
+  .player-west {
+    left: 4px;
   }
 }
