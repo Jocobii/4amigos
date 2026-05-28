@@ -22,6 +22,8 @@ import type {
 
 import {
 	joinRoom,
+	reconnectPlayer,
+	reconnectPlayerByName,
 	startGame,
 	handleDisconnect,
 	getRoom,
@@ -94,8 +96,8 @@ function joinSocketRoom(roomId: string, playerId: string): void {
 	roomSockets.get(roomId)!.add(playerId);
 }
 
-/** Elimina un playerId de todas las salas. */
-function leaveAllRooms(playerId: string): void {
+/** Elimina un playerId de todas las salas de socket. */
+function leaveAllSocketRooms(playerId: string): void {
 	for (const [, members] of roomSockets) {
 		members.delete(playerId);
 	}
@@ -208,17 +210,15 @@ function isValidCardIds(ids: unknown): ids is string[] {
 
 // ─────────────────────────── Manejadores de mensajes ─────────────────────────
 
-function handleMessage(
-	ws: WebSocket,
-	playerId: string,
-	event: string,
-	payload: unknown,
-): void {
+function handleMessage(ws: WebSocket, event: string, payload: unknown): void {
+	// playerId se lee desde clientMap para que refleje reconexiones
 	const data = clientMap.get(ws);
+	const playerId = data?.playerId ?? "";
 
 	// ── JOIN_ROOM ────────────────────────────────────────────────────────────────
 	if (event === "JOIN_ROOM") {
-		const { roomId, playerName } = (payload ?? {}) as Partial<JoinRoomPayload>;
+		const { roomId, playerName, reconnectToken } = (payload ??
+			{}) as Partial<JoinRoomPayload>;
 
 		if (!isValidRoomId(roomId)) {
 			send(ws, "ERROR", {
@@ -236,6 +236,45 @@ function handleMessage(
 		}
 
 		const trimmedRoom = roomId.trim().toUpperCase();
+
+		// ── Intento de reconexión ──────────────────────────────────────────────────
+		if (reconnectToken && typeof reconnectToken === "string") {
+			const recon = reconnectPlayer(trimmedRoom, reconnectToken);
+
+			if (!recon.ok) {
+				send(ws, "ERROR", { code: "RECONNECT_FAILED", message: recon.error });
+				return;
+			}
+
+			const oldPlayerId = recon.playerId;
+			const currentSocketId = data?.playerId ?? "";
+
+			// Limpiar mapas del socket temporal asignado en la conexión
+			if (currentSocketId && currentSocketId !== oldPlayerId) {
+				idMap.delete(currentSocketId);
+				leaveAllSocketRooms(currentSocketId);
+			}
+
+			// Reasignar el WebSocket al ID de juego original
+			idMap.set(oldPlayerId, ws);
+			clientMap.set(ws, {
+				playerId: oldPlayerId,
+				playerName: playerName!.trim(),
+				roomId: trimmedRoom,
+			});
+			joinSocketRoom(trimmedRoom, oldPlayerId);
+
+			console.log(
+				`[Room ${trimmedRoom}] "${playerName}" reconectado (id: ${oldPlayerId})`,
+			);
+
+			// Confirmar reconexión al cliente con su playerId original
+			send(ws, "RECONNECTED", { playerId: oldPlayerId });
+			emitRoomState(trimmedRoom);
+			return;
+		}
+
+		// ── Join normal ────────────────────────────────────────────────────────────
 		const result = joinRoom(trimmedRoom, playerId, playerName!.trim());
 
 		if ("error" in result) {
@@ -243,21 +282,21 @@ function handleMessage(
 			return;
 		}
 
-		const { room } = result;
+		const { room, reconnectToken: token } = result;
 
-		// Actualizar datos del cliente
-		const clientData: ClientData = {
+		clientMap.set(ws, {
 			playerId,
 			playerName: playerName!.trim(),
 			roomId: trimmedRoom,
-		};
-		clientMap.set(ws, clientData);
+		});
 		joinSocketRoom(trimmedRoom, playerId);
 
 		console.log(
 			`[Room ${trimmedRoom}] "${playerName}" se unió (${room.gameState.players.length}/${MAX_PLAYERS})`,
 		);
 
+		// Confirmar join con el token de reconexión — el cliente DEBE guardarlo
+		send(ws, "JOINED", { playerId, reconnectToken: token });
 		emitRoomState(trimmedRoom);
 
 		// Auto-iniciar si la sala está llena
@@ -556,16 +595,16 @@ const httpServer = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server: httpServer });
 
 wss.on("connection", (ws) => {
-	const playerId = nanoid(12);
-	idMap.set(playerId, ws);
+	const socketId = nanoid(12);
+	idMap.set(socketId, ws);
 
-	// Datos del cliente vacíos hasta recibir JOIN_ROOM
-	clientMap.set(ws, { playerId, playerName: "", roomId: "" });
+	// Datos del cliente: se usan socketId como playerId provisional hasta JOIN_ROOM
+	clientMap.set(ws, { playerId: socketId, playerName: "", roomId: "" });
 
-	console.log(`[WS] Conexión: ${playerId}`);
+	console.log(`[WS] Conexión: ${socketId}`);
 
-	// Enviar el playerId asignado al cliente para que lo conozca
-	send(ws, "CONNECTED", { playerId });
+	// Confirmar conexión con el ID provisional
+	send(ws, "CONNECTED", { playerId: socketId });
 
 	ws.on("message", (raw) => {
 		let parsed: { event: string; payload?: unknown };
@@ -589,27 +628,32 @@ wss.on("connection", (ws) => {
 			return;
 		}
 
-		handleMessage(ws, playerId, event, payload);
+		handleMessage(ws, event, payload);
 	});
 
-	ws.on("close", (code, reason) => {
-		console.log(`[WS] Desconexión: ${playerId} — código: ${code}`);
-		idMap.delete(playerId);
-		clientMap.delete(ws);
-		leaveAllRooms(playerId);
+	ws.on("close", (code) => {
+		// Leer playerId desde clientMap (puede haber cambiado en reconexión)
+		const currentData = clientMap.get(ws);
+		const currentPlayerId = currentData?.playerId ?? socketId;
 
-		const { roomId } = handleDisconnect(playerId);
+		console.log(`[WS] Desconexión: ${currentPlayerId} — código: ${code}`);
+
+		idMap.delete(currentPlayerId);
+		clientMap.delete(ws);
+		leaveAllSocketRooms(currentPlayerId);
+
+		const { roomId } = handleDisconnect(currentPlayerId);
 		if (roomId) emitRoomState(roomId);
 	});
 
 	ws.on("error", (err) => {
-		console.error(`[WS] Error en ${playerId}:`, err.message);
+		console.error(`[WS] Error en ${socketId}:`, err.message);
 	});
 });
 
 // ─────────────────────────── Tareas periódicas ───────────────────────────────
 
-setInterval(purgeExpiredRooms, 30 * 60 * 1000);
+setInterval(purgeExpiredRooms, 30 * 60 * 1_000);
 
 // ─────────────────────────── Arranque ────────────────────────────────────────
 
@@ -618,5 +662,3 @@ httpServer.listen(PORT, () => {
 	console.log(`    Puerto : ${PORT}`);
 	console.log(`    Modo   : ${process.env["NODE_ENV"] ?? "development"}\n`);
 });
-
-export { wss, httpServer };
