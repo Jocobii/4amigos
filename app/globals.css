@@ -4339,3 +4339,96 @@ body {
     left: 4px;
   }
 }
+/* ─── MIRROR CONSTRAINT (7 jugado) ─────────────────────────────────────────── */
+
+/* Banner de aviso */
+.mirror-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 180;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(42, 31, 23, 0.92);
+  border: 2px solid #5B2A6E;
+  border-radius: 999px;
+  padding: 8px 20px 8px 14px;
+  box-shadow: 0 0 20px rgba(91, 42, 110, 0.55), 0 2px 8px rgba(42, 31, 23, 0.6);
+  animation: mirror-banner-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.mirror-banner-my-turn {
+  border-color: #D96B2C;
+  box-shadow: 0 0 24px rgba(217, 107, 44, 0.65), 0 2px 8px rgba(42, 31, 23, 0.6);
+  animation: mirror-banner-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+             mirror-banner-pulse 1.6s ease-in-out 0.4s infinite;
+}
+
+.mirror-banner-icon {
+  font-family: 'DM Serif Display', 'Recoleta', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #5B2A6E;
+  background: rgba(91, 42, 110, 0.18);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: -1px;
+}
+
+.mirror-banner-my-turn .mirror-banner-icon {
+  color: #D96B2C;
+  background: rgba(217, 107, 44, 0.15);
+}
+
+.mirror-banner-text {
+  font-family: 'Familjen Grotesk', 'Work Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #F0E4D0;
+}
+
+.mirror-banner-my-turn .mirror-banner-text {
+  color: #F8F0E0;
+}
+
+@keyframes mirror-banner-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.92); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1);    }
+}
+
+@keyframes mirror-banner-pulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(217, 107, 44, 0.65), 0 2px 8px rgba(42, 31, 23, 0.6); }
+  50%       { box-shadow: 0 0 36px rgba(217, 107, 44, 0.9),  0 2px 8px rgba(42, 31, 23, 0.6); }
+}
+
+/* Cartas inválidas bajo constraint mirror */
+.hand-slot-mirror-invalid {
+  transition: filter .25s, opacity .25s;
+}
+
+.hand-slot-mirror-invalid .card {
+  filter: grayscale(0.6) brightness(0.5) !important;
+  opacity: 0.55;
+}
+
+/* Cartas válidas bajo constraint mirror — sutil highlight verde */
+.hand-slot-mirror-valid {
+  transition: filter .25s;
+}
+
+.hand-slot-mirror-valid .card {
+  filter: brightness(1.08) saturate(1.1) !important;
+  outline: 2px solid rgba(91, 42, 110, 0.7);
+  outline-offset: 2px;
+  border-radius: 10px;
+}

@@ -643,10 +643,22 @@ interface DragState {
   moved: boolean; overDrop: boolean; flickReady: boolean;
 }
 
-function HandFan({ cards, selectedIds, draggingIdx, onPointerDownCard, isMyTurn }: {
+const MIRROR_RANK_VALUES: Record<string, number> = {
+  '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
+  '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14,
+};
+
+function isValidUnderMirror(rank: string): boolean {
+  // 2 y 10 siempre son válidos (especiales); el resto debe ser ≤ 7
+  if (rank === '2' || rank === '10') return true;
+  return (MIRROR_RANK_VALUES[rank] ?? 99) <= 7;
+}
+
+function HandFan({ cards, selectedIds, draggingIdx, onPointerDownCard, isMyTurn, turnConstraint }: {
   cards: Card[]; selectedIds: string[]; draggingIdx: number;
   onPointerDownCard: (idx: number, e: React.PointerEvent) => void;
   isMyTurn: boolean;
+  turnConstraint: string;
 }) {
   const total = cards.length;
   const mid = (total - 1) / 2;
@@ -654,6 +666,7 @@ function HandFan({ cards, selectedIds, draggingIdx, onPointerDownCard, isMyTurn 
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
   const spacing = vw < 380 ? 26 : vw < 420 ? 30 : vw < 600 ? 38 : vw < 780 ? 44 : 52;
   const tiltPer = vw < 420 ? 2.5 : 4;
+  const isMirror = turnConstraint === 'mirror' && isMyTurn;
   return (
     <div className="hand-wrap">
       <div className="hand-fan">
@@ -662,15 +675,18 @@ function HandFan({ cards, selectedIds, draggingIdx, onPointerDownCard, isMyTurn 
           const isSel = selectedIds.includes(c.id);
           const isDragging = i === draggingIdx;
           const inactive = !isMyTurn && !isSel;
+          // En constraint mirror: atenuar cartas inválidas (> 7, excepto 2 y 10)
+          const mirrorInvalid = isMirror && !isSel && !isValidUnderMirror(c.rank);
+          const mirrorValid = isMirror && isValidUnderMirror(c.rank) && !isSel;
           return (
             <div key={c.id}
-              className={`hand-slot${isSel ? ' hand-slot-sel' : ''}${isDragging ? ' hand-slot-dragging' : ''}${inactive ? ' hand-slot-inactive' : ''}`}
+              className={`hand-slot${isSel ? ' hand-slot-sel' : ''}${isDragging ? ' hand-slot-dragging' : ''}${inactive ? ' hand-slot-inactive' : ''}${mirrorInvalid ? ' hand-slot-mirror-invalid' : ''}${mirrorValid ? ' hand-slot-mirror-valid' : ''}`}
               style={{
                 transform: `translateX(${offset * spacing}px) translateY(${Math.abs(offset) * 5 + (isSel ? -28 : 0)}px) rotate(${offset * tiltPer}deg)`,
                 zIndex: isSel ? 100 : 10 + i,
               }}
               onPointerDown={(e) => onPointerDownCard(i, e)}>
-              <CardFace card={c} lifted={isSel} dim={inactive} />
+              <CardFace card={c} lifted={isSel} dim={inactive || mirrorInvalid} />
             </div>
           );
         })}
@@ -791,16 +807,32 @@ function OpponentMesa({ tableUp, tableDownCount }: {
   );
 }
 
+// ─── MirrorConstraintBanner ──────────────────────────────────────────────────
+
+function MirrorConstraintBanner({ isMyTurn }: { isMyTurn: boolean }) {
+  return (
+    <div className={`mirror-banner${isMyTurn ? ' mirror-banner-my-turn' : ''}`} role="status" aria-live="polite">
+      <span className="mirror-banner-icon">↓7</span>
+      <span className="mirror-banner-text">
+        {isMyTurn
+          ? '¡Juega ≤ 7, carnal! (2 y 10 también sirven)'
+          : 'El 7 está activo — el turno exige carta ≤ 7'}
+      </span>
+    </div>
+  );
+}
+
 // ─── PlayerZone ───────────────────────────────────────────────────────────────
 // Layout Opción C con collapse: solo la franja activa se expande a full size.
 // Las franjas inactivas colapsan a un strip de ~34px con pip indicators.
 
 function PlayerZone({
-  self, selectedIds, onToggle, isMyTurn, onPlay, draggingIdx, onPointerDownCard,
+  self, selectedIds, onToggle, isMyTurn, onPlay, draggingIdx, onPointerDownCard, turnConstraint,
 }: {
   self: SelfView; selectedIds: string[]; onToggle: (id: string) => void;
   isMyTurn: boolean; onPlay: () => void;
   draggingIdx: number; onPointerDownCard: (idx: number, e: React.PointerEvent) => void;
+  turnConstraint: string;
 }) {
   const inHandPhase = self.hand.length > 0;
   const inUpPhase = self.hand.length === 0 && self.tableUp.length > 0;
@@ -915,6 +947,7 @@ function PlayerZone({
             draggingIdx={draggingIdx}
             onPointerDownCard={onPointerDownCard}
             isMyTurn={isMyTurn}
+            turnConstraint={turnConstraint}
           />
         </div>
       ) : (
@@ -1339,7 +1372,7 @@ export function GameBoard() {
 
   const {
     self, opponents, phase, discardTopCard, discardPileCount, deckCount,
-    lastActivity, round, roomId, currentPlayerId, turnStartedAt,
+    lastActivity, round, roomId, currentPlayerId, turnStartedAt, turnConstraint,
   } = gameView;
 
   const dropHover = !!(drag && drag.overDrop && drag.moved);
@@ -1406,6 +1439,11 @@ export function GameBoard() {
       <InterceptFlashOverlay active={interceptActive} />
       <InterceptBanner canIntercept={canIntercept} onIntercept={interceptTurn} />
 
+      {/* ── Mirror constraint banner (7 jugado) ───────────── */}
+      {turnConstraint === 'mirror' && phase === 'playing' && (
+        <MirrorConstraintBanner isMyTurn={isMyTurn} />
+      )}
+
       {/* ── Bottom bar ────────────────────────────────────── */}
       {self && (
         <div className="bottom-bar">
@@ -1437,6 +1475,7 @@ export function GameBoard() {
             onPlay={handlePlay}
             draggingIdx={drag && drag.moved ? drag.idx : -1}
             onPointerDownCard={handleCardPointerDown}
+            turnConstraint={turnConstraint}
           />
 
           {phase === 'playing' && (
