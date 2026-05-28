@@ -33,15 +33,23 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-/** Crea dos barajas inglesas (104 cartas) con IDs únicos */
+/**
+ * Crea el mazo de juego.
+ * - Producción / default: 2 barajas inglesas (104 cartas).
+ * - Dev con devShortDeck=true: 1 baraja (52 cartas) para terminar partidas rápido.
+ */
 export function createDoubleDeck(): Card[] {
+  const deckCount = config.devShortDeck ? 1 : 2;
   const cards: Card[] = [];
-  for (let deck = 0; deck < 2; deck++) {
+  for (let deck = 0; deck < deckCount; deck++) {
     for (const suit of SUITS) {
       for (const rank of RANKS) {
         cards.push({ id: `${deck}_${suit}_${rank}_${nanoid(4)}`, rank, suit });
       }
     }
+  }
+  if (config.devShortDeck) {
+    console.log(`[DEV] Mazo corto activo: ${cards.length} cartas (1 baraja).`);
   }
   return shuffle(cards);
 }
@@ -77,7 +85,11 @@ export function createInitialGameState(
     penaltyCount: 0,
   }));
 
-  const remainingDeck = deck.slice(deckIdx);
+  // En dev: mazo vacío → no hay robo automático, las fases finales llegan de inmediato.
+  const remainingDeck = config.devShortDeck ? [] : deck.slice(deckIdx);
+  if (config.devShortDeck) {
+    console.log('[DEV] Mazo vacío: 4 cartas por zona, sin robo automático.');
+  }
 
   return {
     phase: 'playing',
