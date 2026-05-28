@@ -21,6 +21,26 @@ import type {
 const TURN_SECONDS = 15;
 const POSITIONS = ['north', 'west', 'east'] as const;
 
+/**
+ * Calcula la posición visual de un oponente relativa al jugador local,
+ * usando la diferencia de seatIndex. El turno avanza en orden creciente
+ * de seatIndex, por lo que el jugador "+1" juega inmediatamente después
+ * del local y aparece a su DERECHA (east).
+ *   rel = 1 → east  (siguiente en turno)
+ *   rel = 2 → north (al frente / dos turnos)
+ *   rel = 3 → west  (anterior en turno)
+ */
+function getOpponentPosition(
+  selfSeat: number,
+  oppSeat: number,
+  n: number,
+): 'north' | 'west' | 'east' {
+  const rel = (oppSeat - selfSeat + n) % n;
+  if (rel === 1) return 'east';
+  if (rel === 2) return 'north';
+  return 'west';
+}
+
 const POZO_TIERS = [
   { min: 0, label: 'EN MESA', copy: 'tranqui' },
   { min: 4, label: 'CALENTANDO', copy: 'va creciendo' },
@@ -302,7 +322,9 @@ function TurnFlowRing({
   const cx = size / 2;
   const cy = size / 2;
 
-  const posAngles = [-90, 0, 90, 180]; // top, right, bottom, left
+  // self=bottom(90°), rel+1=right(0°), rel+2=top(-90°), rel+3=left(180°)
+  // playerOrder debe llegar ordenado: [self, seat+1, seat+2, seat+3]
+  const posAngles = [90, 0, -90, 180]; // bottom, right, top, left
   const activeIdx = playerOrder.indexOf(currentPlayerId);
   const nextIdx = activeIdx >= 0 ? (activeIdx + 1) % playerOrder.length : -1;
 
@@ -318,7 +340,7 @@ function TurnFlowRing({
     const midRad = (midDeg * Math.PI) / 180;
     activeArrowMx = cx + R * Math.cos(midRad);
     activeArrowMy = cy + R * Math.sin(midRad);
-    activeArrowRot = midDeg - 90;
+    activeArrowRot = midDeg; // tangente counterclockwise: arrowRot = midDeg
     activeArrowLx = cx + (R - 46) * Math.cos(midRad);
     activeArrowLy = cy + (R - 46) * Math.sin(midRad);
     showActiveArrow = true;
@@ -334,11 +356,11 @@ function TurnFlowRing({
 
       {/* Flechas de dirección — una entre cada par de posiciones */}
       {posAngles.map((deg, i) => {
-        const midDeg = deg + 45; // mitad entre posición i y siguiente (clockwise)
+        const midDeg = deg - 45; // mitad entre posición i y siguiente (counterclockwise)
         const rad = (midDeg * Math.PI) / 180;
         const ax = cx + R * Math.cos(rad);
         const ay = cy + R * Math.sin(rad);
-        const arrowRot = midDeg + 90; // tangente que apunta en la dirección de juego
+        const arrowRot = midDeg; // tangente counterclockwise: arrowRot = midDeg
         const isHot = i === activeIdx && nextIdx >= 0;
         const fill = isHot ? '#FF6A1A' : 'rgba(255,255,255,.22)';
         const filt = isHot
@@ -1353,8 +1375,9 @@ export function GameBoard() {
       west: { x: 200, y: window.innerHeight / 2 },
       east: { x: window.innerWidth - 200, y: window.innerHeight / 2 },
     };
-    const oppIdx = gameView!.opponents.indexOf(p);
-    const pos = positions[POSITIONS[oppIdx % 3]!] ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const rSelfSeat = gameView?.self?.seatIndex ?? 0;
+    const rTotal = 1 + (gameView?.opponents.length ?? 0);
+    const pos = positions[getOpponentPosition(rSelfSeat, p.seatIndex, rTotal)] ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const id = String(Date.now() + Math.random());
     const drift = (Math.random() - 0.5) * 80;
     setLocalReactions(rs => [...rs, { id, kind, x: pos.x, y: pos.y, drift }]);
@@ -1377,8 +1400,16 @@ export function GameBoard() {
 
   const dropHover = !!(drag && drag.overDrop && drag.moved);
 
-  // Player order for TurnFlowRing
-  const allPlayerIds = self ? [self.id, ...opponents.map(o => o.id)] : opponents.map(o => o.id);
+  // Player order for TurnFlowRing — ordenado por seat relativo al jugador local:
+  // [self, seat+1, seat+2, seat+3] para que coincida con posAngles [bottom, right, top, left]
+  const selfSeat = self?.seatIndex ?? 0;
+  const totalPlayers = 1 + opponents.length;
+  const allPlayerIds: string[] = self ? [self.id] : [];
+  for (let rel = 1; rel < totalPlayers; rel++) {
+    const targetSeat = (selfSeat + rel) % totalPlayers;
+    const opp = opponents.find(o => o.seatIndex === targetSeat);
+    if (opp) allPlayerIds.push(opp.id);
+  }
   const playerColors: Record<string, string> = {};
   if (self) playerColors[self.id] = self.avatarColor;
   opponents.forEach(o => { playerColors[o.id] = o.avatarColor; });
@@ -1413,11 +1444,13 @@ export function GameBoard() {
       )}
 
       {/* ── Opponent corners ──────────────────────────────── */}
-      {opponents.map((opp, i) => (
+      {opponents.map((opp) => (
         <PlayerCorner key={opp.id} player={opp}
           active={currentPlayerId === opp.id}
           remaining={timerRemaining} total={TURN_SECONDS}
-          position={POSITIONS[i % 3]!}
+          position={self
+            ? getOpponentPosition(self.seatIndex, opp.seatIndex, totalPlayers)
+            : POSITIONS[opponents.indexOf(opp) % 3]!}
           lastReaction={lastReacts[opp.id] ?? null} />
       ))}
 
@@ -1508,7 +1541,7 @@ export function GameBoard() {
         </div>
       )}
 
-      {/* ── Reaction floaters ─────────────────────────────── */}
+      {/* Reaction floaters */}
       {localReactions.map(r => (
         <ReactionFloater key={r.id} {...r}
           onDone={() => setLocalReactions(rs => rs.filter(x => x.id !== r.id))} />
