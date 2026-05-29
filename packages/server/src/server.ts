@@ -569,6 +569,23 @@ function handleMessage(ws: WebSocket, event: string, payload: unknown): void {
 		return;
 	}
 
+	// ── CAMERA_LOOK ──────────────────────────────────────────────────────────────
+	// Recibe el yaw actual de la cámara del jugador y lo rebroadcastea a los
+	// demás de la sala como PLAYER_LOOK. No modifica el estado del juego.
+	if (event === "CAMERA_LOOK") {
+		const yaw =
+			typeof (payload as any)?.yaw === "number"
+				? Math.max(-90, Math.min(90, (payload as any).yaw as number))
+				: 0;
+		// Rebroadcastear solo a los otros jugadores (no al emisor)
+		for (const [clientWs, clientData] of clientMap.entries()) {
+			if (clientWs !== ws && clientData.roomId === roomId && clientWs.readyState === WebSocket.OPEN) {
+				send(clientWs, "PLAYER_LOOK", { playerId, yaw });
+			}
+		}
+		return;
+	}
+
 	// ── SEND_REACTION ────────────────────────────────────────────────────────────
 	if (event === "SEND_REACTION") {
 		const emoji =
