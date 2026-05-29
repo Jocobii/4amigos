@@ -49,12 +49,18 @@ interface ClientData {
 	playerId: string;
 	playerName: string;
 	roomId: string;
+	clientType: import("./types/game.js").ClientType;
 }
 
 /** ws → datos del cliente */
 const clientMap = new Map<WebSocket, ClientData>();
 /** playerId → ws (para envíos directos) */
 const idMap = new Map<string, WebSocket>();
+/**
+ * playerId → ClientType. Persiste aunque cambie el ws (reconexión) para que
+ * emitRoomState sepa a quién entregar las manos de los oponentes (clientes 3D).
+ */
+const clientTypes = new Map<string, import("./types/game.js").ClientType>();
 /** roomId → Set de playerIds (equivalente a socket.io rooms) */
 const roomSockets = new Map<string, Set<string>>();
 
@@ -153,7 +159,7 @@ function emitRoomState(roomId: string): void {
 	const room = getRoom(roomId);
 	if (!room) return;
 
-	const views = buildRoomViews(room);
+	const views = buildRoomViews(room, clientTypes);
 	for (const [playerId, view] of views.entries()) {
 		sendToPlayer(playerId, "ROOM_STATE", { view });
 	}
@@ -217,8 +223,12 @@ function handleMessage(ws: WebSocket, event: string, payload: unknown): void {
 
 	// ── JOIN_ROOM ────────────────────────────────────────────────────────────────
 	if (event === "JOIN_ROOM") {
-		const { roomId, playerName, reconnectToken } = (payload ??
+		const { roomId, playerName, reconnectToken, clientType } = (payload ??
 			{}) as Partial<JoinRoomPayload>;
+
+		// Sólo aceptamos "godot3d" como opt-in explícito; cualquier otra cosa → "web".
+		const resolvedClientType: import("./types/game.js").ClientType =
+			clientType === "godot3d" ? "godot3d" : "web";
 
 		if (!isValidRoomId(roomId)) {
 			send(ws, "ERROR", {
@@ -261,7 +271,9 @@ function handleMessage(ws: WebSocket, event: string, payload: unknown): void {
 				playerId: oldPlayerId,
 				playerName: playerName!.trim(),
 				roomId: trimmedRoom,
+				clientType: resolvedClientType,
 			});
+			clientTypes.set(oldPlayerId, resolvedClientType);
 			joinSocketRoom(trimmedRoom, oldPlayerId);
 
 			console.log(
@@ -278,6 +290,24 @@ function handleMessage(ws: WebSocket, event: string, payload: unknown): void {
 		const result = joinRoom(trimmedRoom, playerId, playerName!.trim());
 
 		if ("error" in result) {
+			// Caso especial: la partida ya inició y el jugador YA estaba en la sala
+			// (ocurre cuando el cliente Godot cambia de escena y re-envía JOIN_ROOM
+			// para solicitar un ROOM_STATE fresco — no es un error real).
+			const existingRoom = getRoom(trimmedRoom);
+			const alreadyInGame =
+				existingRoom?.gameState.phase !== "lobby" &&
+				existingRoom?.gameState.players.some((p) => p.id === playerId);
+
+			if (alreadyInGame) {
+				clientTypes.set(playerId, resolvedClientType);
+				joinSocketRoom(trimmedRoom, playerId);
+				console.log(
+					`[Room ${trimmedRoom}] "${playerName}" re-solicitó estado (partida en curso) → emitiendo ROOM_STATE`,
+				);
+				emitRoomState(trimmedRoom);
+				return;
+			}
+
 			send(ws, "ERROR", { code: "JOIN_FAILED", message: result.error });
 			return;
 		}
@@ -288,11 +318,13 @@ function handleMessage(ws: WebSocket, event: string, payload: unknown): void {
 			playerId,
 			playerName: playerName!.trim(),
 			roomId: trimmedRoom,
+			clientType: resolvedClientType,
 		});
+		clientTypes.set(playerId, resolvedClientType);
 		joinSocketRoom(trimmedRoom, playerId);
 
 		console.log(
-			`[Room ${trimmedRoom}] "${playerName}" se unió (${room.gameState.players.length}/${MAX_PLAYERS})`,
+			`[Room ${trimmedRoom}] "${playerName}" se unió (${room.gameState.players.length}/${MAX_PLAYERS}) [${resolvedClientType}]`,
 		);
 
 		// Confirmar join con el token de reconexión — el cliente DEBE guardarlo
@@ -599,7 +631,12 @@ wss.on("connection", (ws) => {
 	idMap.set(socketId, ws);
 
 	// Datos del cliente: se usan socketId como playerId provisional hasta JOIN_ROOM
-	clientMap.set(ws, { playerId: socketId, playerName: "", roomId: "" });
+	clientMap.set(ws, {
+		playerId: socketId,
+		playerName: "",
+		roomId: "",
+		clientType: "web",
+	});
 
 	console.log(`[WS] Conexión: ${socketId}`);
 
@@ -640,6 +677,7 @@ wss.on("connection", (ws) => {
 
 		idMap.delete(currentPlayerId);
 		clientMap.delete(ws);
+		clientTypes.delete(currentPlayerId);
 		leaveAllSocketRooms(currentPlayerId);
 
 		const { roomId } = handleDisconnect(currentPlayerId);

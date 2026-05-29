@@ -712,6 +712,12 @@ export function buildGameStateView(
 	state: GameState,
 	forPlayerId: string,
 	roomId: string,
+	/**
+	 * Cuando es true, la vista de cada oponente incluye además su mano real
+	 * (`hand`). Sólo debe activarse para clientes 3D de confianza (ver ClientType).
+	 * Por defecto false → comportamiento sanitizado de siempre (sólo handCount).
+	 */
+	revealOpponentHands = false,
 ) {
 	const selfPlayer = state.players.find((p) => p.id === forPlayerId);
 	const currentPlayer = getCurrentPlayer(state);
@@ -760,6 +766,8 @@ export function buildGameStateView(
 			isConnected: p.isConnected,
 			penaltyCount: p.penaltyCount,
 			handCount: p.hand.length,
+			// Mano real sólo para clientes 3D de confianza; web recibe undefined.
+			...(revealOpponentHands ? { hand: p.hand } : {}),
 			tableUp: p.tableUp,
 			tableDownCount: p.tableDown.length,
 			tableDown: p.tableDown.map(

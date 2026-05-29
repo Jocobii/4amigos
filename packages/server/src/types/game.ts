@@ -41,6 +41,17 @@ export interface CardBack {
 
 export type CardView = Card | CardBack;
 
+/**
+ * Tipo de cliente conectado. Determina cuánta información se le envía.
+ *  - "web":     cliente 2D estándar. Recibe la vista totalmente sanitizada.
+ *  - "godot3d": cliente 3D inmersivo. Recibe además las cartas de la mano de
+ *               los oponentes para poder renderizarlas físicamente. La justicia
+ *               la impone el RENDER (las cartas se ven de espaldas y sólo se
+ *               alcanzan a leer de refilón al girar). NO es anti-trampa fuerte:
+ *               sólo habilitar en builds/salas de confianza.
+ */
+export type ClientType = "web" | "godot3d";
+
 // ─────────────────────────── Estado del jugador ───────────────────────────────
 
 export type PlayerStatus = "waiting" | "playing" | "finished" | "disconnected";
@@ -79,6 +90,12 @@ export interface PlayerView {
 	readonly penaltyCount: number;
 	/** Sólo el conteo de cartas en la mano */
 	readonly handCount: number;
+	/**
+	 * Cartas reales de la mano del oponente. SÓLO se incluye cuando el cliente
+	 * destinatario es "godot3d" (ver ClientType). Para clientes web es undefined.
+	 * El cliente 3D las renderiza de espaldas; sólo se leen al girar la cámara.
+	 */
+	readonly hand?: Card[];
 	/** Las boca arriba son visibles para todos */
 	readonly tableUp: Card[];
 	/** Las ciegas: sólo el conteo y placeholders sin rank/suit */
@@ -213,6 +230,8 @@ export interface JoinRoomPayload {
 	playerName: string;
 	/** Presente sólo en reconexión — token recibido en el evento JOINED del join original */
 	reconnectToken?: string;
+	/** Tipo de cliente. Si se omite, el servidor asume "web" (vista sanitizada). */
+	clientType?: ClientType;
 }
 
 export interface PlayCardPayload {

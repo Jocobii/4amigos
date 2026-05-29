@@ -301,15 +301,29 @@ export function getRoom(roomId: string): Room | null {
 	return rooms.get(roomId) ?? null;
 }
 
-/** Construye la vista sanitizada para cada jugador conectado en la sala */
+/**
+ * Construye la vista sanitizada para cada jugador conectado en la sala.
+ *
+ * @param clientTypes Mapa playerId -> ClientType. Los jugadores marcados como
+ *        "godot3d" reciben ademas las manos reales de sus oponentes (para el
+ *        render fisico 3D). Si no se pasa el mapa, todos reciben la vista web
+ *        sanitizada de siempre.
+ */
 export function buildRoomViews(
 	room: Room,
+	clientTypes?: Map<string, import("./types/game.js").ClientType>,
 ): Map<string, ReturnType<typeof buildGameStateView>> {
 	const views = new Map<string, ReturnType<typeof buildGameStateView>>();
 	for (const player of room.gameState.players) {
+		const revealOpponentHands = clientTypes?.get(player.id) === "godot3d";
 		views.set(
 			player.id,
-			buildGameStateView(room.gameState, player.id, room.id),
+			buildGameStateView(
+				room.gameState,
+				player.id,
+				room.id,
+				revealOpponentHands,
+			),
 		);
 	}
 	return views;
