@@ -4432,3 +4432,1421 @@ body {
   outline-offset: 2px;
   border-radius: 10px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   POV MOBILE REDISEÑO — componentes nuevos + reorganización ≤ 768px
+   Estos estilos se activan SOLO en mobile. En desktop todos los componentes
+   nuevos están ocultos (display:none) y nada cambia.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Base: componentes nuevos OCULTOS en desktop ─────────────────────────── */
+.mobile-opponents-bar,
+.mob-spotlight,
+.mob-turn-strip,
+.mob-actions,
+.mob-reactions-overlay {
+  display: none;
+}
+
+/* ── OPPONENTS BAR (strip horizontal arriba de la mesa) ──────────────────── */
+.mobile-opponents-bar {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  z-index: 35;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 14px;
+  padding: 6px 10px 6px;
+  pointer-events: auto;
+}
+
+.mob-opp {
+  background: transparent;
+  border: 0;
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+  transition: background .12s, transform .12s;
+  -webkit-tap-highlight-color: transparent;
+  color: #F0E4D0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.mob-opp:active {
+  transform: scale(.95);
+}
+
+.mob-opp-pinned {
+  background: rgba(242, 180, 49, .12);
+  box-shadow: inset 0 0 0 1px rgba(242, 180, 49, .45);
+}
+
+.mob-opp-avatar-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.mob-opp-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', 'Recoleta', serif;
+  font-size: 22px;
+  color: #F0E4D0;
+  border: 2px solid rgba(14, 11, 8, .65);
+  box-shadow: 0 2px 6px rgba(92, 42, 31, .35);
+  text-transform: uppercase;
+}
+
+.mob-opp-count {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 10px;
+  background: #0E0B08;
+  color: #F0E4D0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(122, 107, 92, .5);
+}
+
+.mob-opp-active .mob-opp-count {
+  border-color: #F2B431;
+  color: #F2B431;
+}
+
+.mob-opp-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  color: rgba(240, 228, 208, .85);
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mob-opp-active .mob-opp-name {
+  color: #F2B431;
+  font-weight: 600;
+}
+
+.mob-opp-timer-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #F2B431;
+  letter-spacing: .1em;
+}
+
+/* AvatarTimerRing dentro del mob-opp se centra encima del avatar */
+.mob-opp-avatar-wrap > svg {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 52px !important;
+  height: 52px !important;
+  pointer-events: none;
+}
+
+/* ── SPOTLIGHT (strip entre rivales y mesa) ──────────────────────────────── */
+.mob-spotlight {
+  position: absolute;
+  top: 122px;
+  left: 10px;
+  right: 10px;
+  z-index: 34;
+  background: rgba(26, 19, 14, .78);
+  border: 1px dashed rgba(242, 180, 49, .4);
+  border-radius: 10px;
+  padding: 7px 10px 8px;
+  backdrop-filter: blur(4px);
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mob-spotlight-empty {
+  border-color: rgba(122, 107, 92, .3);
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.mob-spotlight-empty-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: rgba(240, 228, 208, .45);
+}
+
+.mob-spotlight-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.mob-spotlight-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: #F2B431;
+  font-weight: 600;
+}
+
+.mob-spotlight-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .1em;
+  color: rgba(122, 107, 92, .95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mob-spotlight-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mob-spotlight-card {
+  flex: 1 1 0;
+  height: 30px;
+  min-width: 26px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mob-spotlight-card-face {
+  background: #F0E4D0;
+  border: 1px solid #2A1F17;
+  color: #2A1F17;
+}
+
+.mob-spotlight-card-empty {
+  background: rgba(14, 11, 8, .5);
+  border: 1px dashed rgba(122, 107, 92, .35);
+}
+
+.mob-spotlight-blinds {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  padding: 0 8px;
+  border-left: 1px solid rgba(122, 107, 92, .3);
+  min-width: 44px;
+}
+
+.mob-spotlight-blinds-stack {
+  display: inline-block;
+  width: 22px;
+  height: 14px;
+  background: #5C2A1F;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, .4);
+  box-shadow: 2px 2px 0 -1px rgba(92, 42, 31, .7);
+}
+
+.mob-spotlight-blinds-count {
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #F0E4D0;
+  font-weight: 600;
+}
+
+/* ── TURN STRIP (sólo cuando es mi turno) ────────────────────────────────── */
+.mob-turn-strip {
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 12px;
+  background: rgba(26, 19, 14, .92);
+  border-top: 1px solid rgba(242, 180, 49, .4);
+  border-bottom: 1px solid rgba(242, 180, 49, .12);
+}
+
+.mob-turn-strip-label {
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: #F2B431;
+}
+
+.mob-turn-strip-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(58, 42, 32, .8);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mob-turn-strip-fill {
+  height: 100%;
+  background: #F2B431;
+  border-radius: 3px;
+  transition: width .25s linear;
+}
+
+.mob-turn-strip-secs {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #F0E4D0;
+  letter-spacing: .1em;
+  min-width: 26px;
+  text-align: right;
+}
+
+/* ── ACTION BAR (reemplazo de HandActions en mobile) ─────────────────────── */
+.mob-actions {
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  background: #0E0B08;
+  border-top: 1px solid rgba(58, 42, 32, .55);
+}
+
+.mob-actions > * {
+  height: 44px;
+}
+
+.mob-actions button {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .12em;
+  cursor: pointer;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s;
+}
+
+.mob-actions button:active {
+  transform: scale(.97);
+}
+
+.mob-actions-react {
+  width: 60px;
+  background: #1E1611;
+  border: 1px solid rgba(58, 42, 32, .9);
+  color: #F0E4D0;
+  padding: 0 6px;
+  gap: 4px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mob-actions-react-open {
+  background: #D96B2C;
+  border-color: #F2B431;
+}
+
+.mob-actions-react-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 14px;
+  color: #F0E4D0;
+  text-transform: uppercase;
+}
+
+.mob-actions-react-icon {
+  font-size: 16px;
+  color: #F0E4D0;
+  line-height: 1;
+  font-family: 'Anton', sans-serif;
+}
+
+.mob-actions-secondary {
+  flex: 1;
+  padding: 0 14px;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.mob-actions-take {
+  background: #1E1611;
+  border: 1px solid rgba(58, 42, 32, .9);
+  color: #F0E4D0;
+  gap: 6px;
+}
+
+.mob-actions-take-icon {
+  font-size: 13px;
+  opacity: .85;
+}
+
+.mob-actions-take-label {
+  white-space: nowrap;
+  letter-spacing: .14em;
+}
+
+.mob-actions-intercept {
+  background: #5B2A6E;
+  border: 1.5px solid #F2B431;
+  color: #F0E4D0;
+  flex-direction: column;
+  gap: 0;
+  padding: 4px 12px;
+  animation: mob-intercept-pulse 1s ease-in-out infinite;
+  box-shadow: 0 4px 14px rgba(91, 42, 110, .5);
+}
+
+.mob-actions-intercept-kicker {
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 13px;
+  letter-spacing: .12em;
+  color: #F2B431;
+  line-height: 1;
+}
+
+.mob-actions-intercept-label {
+  font-size: 8px;
+  letter-spacing: .22em;
+  color: #F0E4D0;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+@keyframes mob-intercept-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 14px rgba(91, 42, 110, .55), 0 0 0 0 rgba(242, 180, 49, .45);
+  }
+  50% {
+    box-shadow: 0 4px 14px rgba(91, 42, 110, .7), 0 0 0 6px rgba(242, 180, 49, 0);
+  }
+}
+
+.mob-actions-primary {
+  flex: 1.4;
+  padding: 0 18px;
+  background: #D96B2C;
+  border: 0;
+  color: #0E0B08;
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 17px;
+  letter-spacing: .16em;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(217, 107, 44, .45);
+  min-width: 0;
+}
+
+.mob-actions-primary-label {
+  line-height: 1;
+}
+
+.mob-actions-primary-arrow {
+  font-size: 14px;
+}
+
+.mob-actions-primary-disabled {
+  background: rgba(58, 42, 32, .6);
+  color: rgba(240, 228, 208, .35);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ── REACTIONS POPOVER (mobile-only) ─────────────────────────────────────── */
+.mob-reactions-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: rgba(14, 11, 8, .72);
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 110px;
+  backdrop-filter: blur(2px);
+}
+
+.mob-reactions-inner {
+  background: #1E1611;
+  border: 1px solid rgba(58, 42, 32, .9);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .55);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACTIVACIÓN MOBILE: ≤ 768px aplica todo el rediseño
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Oculta lo desktop que ahora vive en otros componentes */
+  .opponent-corners-desktop {
+    display: none !important;
+  }
+
+  .me-zone {
+    display: none !important;
+  }
+
+  /* In-game HandActions queda reemplazada por mob-actions.
+     IMPORTANTE: el wrapper lobby (.lobby-start-actions) sigue visible. */
+  .hand-actions:not(.lobby-start-actions) {
+    display: none !important;
+  }
+
+  /* Banner de intercept del centro redundante en mobile — el botón
+     vive en la mob-actions y se ve mejor ahí abajo. */
+  .intercept-banner-overlay {
+    display: none !important;
+  }
+
+  /* Activa componentes mobile */
+  .mobile-opponents-bar {
+    display: flex;
+  }
+
+  .mob-spotlight {
+    display: flex;
+  }
+
+  .mob-turn-strip {
+    display: flex;
+  }
+
+  .mob-actions {
+    display: flex;
+  }
+
+  .mob-reactions-overlay {
+    display: flex;
+  }
+
+  /* Mesa central: reposiciona abajo del spotlight y arriba del bottom-bar */
+  .center-table {
+    top: 210px;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    gap: 18px;
+    z-index: 25;
+  }
+
+  /* Drop zone amplio — cubre casi toda la mesa */
+  .pozo-drop-zone {
+    left: -160px;
+    right: -160px;
+    top: -170px;
+    bottom: -70px;
+    border-radius: 24px;
+  }
+
+  /* Bottom bar: stack vertical natural */
+  .bottom-bar {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  /* Player zone: ocupa todo el ancho disponible, sin padding lateral exagerado */
+  .player-zone {
+    width: 100%;
+    max-width: 100%;
+    padding: 4px 6px 0;
+  }
+
+  /* TurnFlowRing: pierde protagonismo, queda como halo sutil tras la mesa */
+  .turn-flow-ring {
+    top: 200px !important;
+    width: 230px !important;
+    height: 230px !important;
+    opacity: .28;
+    pointer-events: none;
+  }
+
+  /* Activity feed: ya estaba oculto en ≤480; en 768 también lo apagamos
+     porque ahora compite con la spotlight strip. */
+  .activity-feed {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AJUSTES iPhone 13 / mobile portrait (≤ 480px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+
+  .mobile-opponents-bar {
+    gap: 10px;
+    padding: 4px 6px 4px;
+  }
+
+  .mob-opp-avatar-wrap,
+  .mob-opp-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mob-opp-avatar {
+    font-size: 20px;
+  }
+
+  .mob-opp-avatar-wrap > svg {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .mob-opp-name {
+    max-width: 56px;
+    font-size: 9px;
+  }
+
+  .mob-spotlight {
+    top: 110px;
+    padding: 6px 8px 7px;
+  }
+
+  .mob-spotlight-card {
+    height: 26px;
+    min-width: 22px;
+    font-size: 11px;
+  }
+
+  .mob-spotlight-blinds-stack {
+    width: 18px;
+    height: 12px;
+  }
+
+  .center-table {
+    top: 192px;
+    gap: 12px;
+    transform: translateX(-50%) scale(.86);
+    transform-origin: top center;
+  }
+
+  .turn-flow-ring {
+    opacity: 0;
+  }
+
+  .pozo-drop-zone {
+    left: -140px;
+    right: -140px;
+    top: -150px;
+    bottom: -60px;
+  }
+
+  .mob-actions {
+    padding: 6px 8px 8px;
+    gap: 6px;
+  }
+
+  .mob-actions-primary {
+    font-size: 16px;
+    padding: 0 14px;
+  }
+
+  .mob-actions-secondary {
+    font-size: 10px;
+    padding: 0 10px;
+  }
+
+  .mob-turn-strip {
+    height: 28px;
+    padding: 0 10px;
+  }
+
+  .mob-turn-strip-label {
+    font-size: 10px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANTALLAS MUY ANGOSTAS (≤ 360px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 360px) {
+
+  .mobile-opponents-bar {
+    gap: 6px;
+  }
+
+  .mob-opp-avatar-wrap,
+  .mob-opp-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mob-opp-avatar {
+    font-size: 18px;
+  }
+
+  .mob-opp-avatar-wrap > svg {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .center-table {
+    top: 188px;
+    transform: translateX(-50%) scale(.78);
+  }
+
+  .mob-actions-react {
+    width: 52px;
+  }
+
+  .mob-actions-primary {
+    font-size: 14px;
+    padding: 0 10px;
+    letter-spacing: .12em;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   POV MOBILE REDISEÑO — componentes nuevos + reorganización ≤ 768px
+   Estos estilos se activan SOLO en mobile. En desktop los componentes nuevos
+   están ocultos (display:none) y nada del layout PC se altera.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Base: componentes nuevos OCULTOS en desktop ─────────────────────────── */
+.mobile-opponents-bar,
+.mob-spotlight,
+.mob-turn-strip,
+.mob-actions,
+.mob-reactions-overlay {
+  display: none;
+}
+
+/* ── OPPONENTS BAR (strip horizontal arriba de la mesa) ──────────────────── */
+.mobile-opponents-bar {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  right: 0;
+  z-index: 35;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 14px;
+  padding: 6px 10px 6px;
+  pointer-events: auto;
+}
+
+.mob-opp {
+  background: transparent;
+  border: 0;
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-radius: 10px;
+  transition: background .12s, transform .12s;
+  -webkit-tap-highlight-color: transparent;
+  color: #F0E4D0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.mob-opp:active { transform: scale(.95); }
+
+.mob-opp-pinned {
+  background: rgba(242, 180, 49, .12);
+  box-shadow: inset 0 0 0 1px rgba(242, 180, 49, .45);
+}
+
+.mob-opp-avatar-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.mob-opp-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', 'Recoleta', serif;
+  font-size: 22px;
+  color: #F0E4D0;
+  border: 2px solid rgba(14, 11, 8, .65);
+  box-shadow: 0 2px 6px rgba(92, 42, 31, .35);
+  text-transform: uppercase;
+}
+
+.mob-opp-count {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 10px;
+  background: #0E0B08;
+  color: #F0E4D0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(122, 107, 92, .5);
+}
+
+.mob-opp-active .mob-opp-count {
+  border-color: #F2B431;
+  color: #F2B431;
+}
+
+.mob-opp-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  color: rgba(240, 228, 208, .85);
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mob-opp-active .mob-opp-name {
+  color: #F2B431;
+  font-weight: 600;
+}
+
+.mob-opp-timer-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #F2B431;
+  letter-spacing: .1em;
+}
+
+.mob-opp-avatar-wrap > svg {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 52px !important;
+  height: 52px !important;
+  pointer-events: none;
+}
+
+/* ── SPOTLIGHT (strip entre rivales y mesa) ──────────────────────────────── */
+.mob-spotlight {
+  position: absolute;
+  top: 122px;
+  left: 10px;
+  right: 10px;
+  z-index: 34;
+  background: rgba(26, 19, 14, .78);
+  border: 1px dashed rgba(242, 180, 49, .4);
+  border-radius: 10px;
+  padding: 7px 10px 8px;
+  backdrop-filter: blur(4px);
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mob-spotlight-empty {
+  border-color: rgba(122, 107, 92, .3);
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.mob-spotlight-empty-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: rgba(240, 228, 208, .45);
+}
+
+.mob-spotlight-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.mob-spotlight-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: #F2B431;
+  font-weight: 600;
+}
+
+.mob-spotlight-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: .1em;
+  color: rgba(122, 107, 92, .95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mob-spotlight-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mob-spotlight-card {
+  flex: 1 1 0;
+  height: 30px;
+  min-width: 26px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mob-spotlight-card-face {
+  background: #F0E4D0;
+  border: 1px solid #2A1F17;
+  color: #2A1F17;
+}
+
+.mob-spotlight-card-empty {
+  background: rgba(14, 11, 8, .5);
+  border: 1px dashed rgba(122, 107, 92, .35);
+}
+
+.mob-spotlight-blinds {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  padding: 0 8px;
+  border-left: 1px solid rgba(122, 107, 92, .3);
+  min-width: 44px;
+}
+
+.mob-spotlight-blinds-stack {
+  display: inline-block;
+  width: 22px;
+  height: 14px;
+  background: #5C2A1F;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, .4);
+  box-shadow: 2px 2px 0 -1px rgba(92, 42, 31, .7);
+}
+
+.mob-spotlight-blinds-count {
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #F0E4D0;
+  font-weight: 600;
+}
+
+/* ── TURN STRIP (mi turno) ───────────────────────────────────────────────── */
+.mob-turn-strip {
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 12px;
+  background: rgba(26, 19, 14, .92);
+  border-top: 1px solid rgba(242, 180, 49, .4);
+  border-bottom: 1px solid rgba(242, 180, 49, .12);
+}
+
+.mob-turn-strip-label {
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: #F2B431;
+}
+
+.mob-turn-strip-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(58, 42, 32, .8);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mob-turn-strip-fill {
+  height: 100%;
+  background: #F2B431;
+  border-radius: 3px;
+  transition: width .25s linear;
+}
+
+.mob-turn-strip-secs {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #F0E4D0;
+  letter-spacing: .1em;
+  min-width: 26px;
+  text-align: right;
+}
+
+/* ── ACTION BAR (reemplazo de HandActions en mobile) ─────────────────────── */
+.mob-actions {
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 10px;
+  background: #0E0B08;
+  border-top: 1px solid rgba(58, 42, 32, .55);
+}
+
+.mob-actions > * { height: 44px; }
+
+.mob-actions button {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: .12em;
+  cursor: pointer;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s;
+}
+
+.mob-actions button:active { transform: scale(.97); }
+
+.mob-actions-react {
+  width: 60px;
+  background: #1E1611;
+  border: 1px solid rgba(58, 42, 32, .9);
+  color: #F0E4D0;
+  padding: 0 6px;
+  gap: 4px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mob-actions-react-open {
+  background: #D96B2C;
+  border-color: #F2B431;
+}
+
+.mob-actions-react-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 14px;
+  color: #F0E4D0;
+  text-transform: uppercase;
+}
+
+.mob-actions-react-icon {
+  font-size: 16px;
+  color: #F0E4D0;
+  line-height: 1;
+  font-family: 'Anton', sans-serif;
+}
+
+.mob-actions-secondary {
+  flex: 1;
+  padding: 0 14px;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.mob-actions-take {
+  background: #1E1611;
+  border: 1px solid rgba(58, 42, 32, .9);
+  color: #F0E4D0;
+  gap: 6px;
+}
+
+.mob-actions-take-icon { font-size: 13px; opacity: .85; }
+.mob-actions-take-label { white-space: nowrap; letter-spacing: .14em; }
+
+.mob-actions-intercept {
+  background: #5B2A6E;
+  border: 1.5px solid #F2B431;
+  color: #F0E4D0;
+  flex-direction: column;
+  gap: 0;
+  padding: 4px 12px;
+  animation: mob-intercept-pulse 1s ease-in-out infinite;
+  box-shadow: 0 4px 14px rgba(91, 42, 110, .5);
+}
+
+.mob-actions-intercept-kicker {
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 13px;
+  letter-spacing: .12em;
+  color: #F2B431;
+  line-height: 1;
+}
+
+.mob-actions-intercept-label {
+  font-size: 8px;
+  letter-spacing: .22em;
+  color: #F0E4D0;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+@keyframes mob-intercept-pulse {
+  0%, 100% { box-shadow: 0 4px 14px rgba(91, 42, 110, .55), 0 0 0 0 rgba(242, 180, 49, .45); }
+  50%      { box-shadow: 0 4px 14px rgba(91, 42, 110, .7), 0 0 0 6px rgba(242, 180, 49, 0); }
+}
+
+.mob-actions-primary {
+  flex: 1.4;
+  padding: 0 18px;
+  background: #D96B2C;
+  border: 0;
+  color: #0E0B08;
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 17px;
+  letter-spacing: .16em;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(217, 107, 44, .45);
+  min-width: 0;
+}
+
+.mob-actions-primary-label { line-height: 1; }
+.mob-actions-primary-arrow { font-size: 14px; }
+
+.mob-actions-primary-disabled {
+  background: rgba(58, 42, 32, .6);
+  color: rgba(240, 228, 208, .35);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ── REACTIONS POPOVER (mobile-only) ─────────────────────────────────────── */
+.mob-reactions-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: rgba(14, 11, 8, .72);
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 110px;
+  backdrop-filter: blur(2px);
+}
+
+.mob-reactions-inner {
+  background: #1E1611;
+  border: 1px solid rgba(58, 42, 32, .9);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .55);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACTIVACIÓN MOBILE: ≤ 768px aplica todo el rediseño
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Oculta lo desktop */
+  .opponent-corners-desktop { display: none !important; }
+  .me-zone { display: none !important; }
+
+  /* HandActions in-game oculta; el wrapper lobby (.lobby-start-actions) NO. */
+  .hand-actions:not(.lobby-start-actions) { display: none !important; }
+
+  /* Banner intercept del centro: en mobile vive en mob-actions */
+  .intercept-banner-overlay { display: none !important; }
+
+  /* Activa componentes mobile */
+  .mobile-opponents-bar { display: flex; }
+  .mob-spotlight { display: flex; }
+  .mob-turn-strip { display: flex; }
+  .mob-actions { display: flex; }
+  .mob-reactions-overlay { display: flex; }
+
+  /* Mesa central: reposiciona entre spotlight y bottom-bar */
+  .center-table {
+    top: 210px;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+    gap: 18px;
+    z-index: 25;
+  }
+
+  /* Drop zone amplio — cubre toda la mesa */
+  .pozo-drop-zone {
+    left: -160px;
+    right: -160px;
+    top: -170px;
+    bottom: -70px;
+    border-radius: 24px;
+  }
+
+  /* Bottom bar: stack vertical natural */
+  .bottom-bar {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .player-zone {
+    width: 100%;
+    max-width: 100%;
+    padding: 4px 6px 0;
+  }
+
+  /* TurnFlowRing: queda como halo sutil tras la mesa */
+  .turn-flow-ring {
+    top: 200px !important;
+    width: 230px !important;
+    height: 230px !important;
+    opacity: .28;
+    pointer-events: none;
+  }
+
+  /* Activity feed: compite con spotlight, apagamos también en 768 */
+  .activity-feed { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AJUSTES iPhone 13 / mobile portrait (≤ 480px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+
+  .mobile-opponents-bar { gap: 10px; padding: 4px 6px 4px; }
+
+  .mob-opp-avatar-wrap,
+  .mob-opp-avatar { width: 40px; height: 40px; }
+  .mob-opp-avatar { font-size: 20px; }
+  .mob-opp-avatar-wrap > svg { width: 48px !important; height: 48px !important; }
+  .mob-opp-name { max-width: 56px; font-size: 9px; }
+
+  .mob-spotlight { top: 110px; padding: 6px 8px 7px; }
+  .mob-spotlight-card { height: 26px; min-width: 22px; font-size: 11px; }
+  .mob-spotlight-blinds-stack { width: 18px; height: 12px; }
+
+  .center-table {
+    top: 192px;
+    gap: 12px;
+    transform: translateX(-50%) scale(.86);
+    transform-origin: top center;
+  }
+
+  .turn-flow-ring { opacity: 0; }
+
+  .pozo-drop-zone {
+    left: -140px;
+    right: -140px;
+    top: -150px;
+    bottom: -60px;
+  }
+
+  .mob-actions { padding: 6px 8px 8px; gap: 6px; }
+  .mob-actions-primary { font-size: 16px; padding: 0 14px; }
+  .mob-actions-secondary { font-size: 10px; padding: 0 10px; }
+  .mob-turn-strip { height: 28px; padding: 0 10px; }
+  .mob-turn-strip-label { font-size: 10px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANTALLAS MUY ANGOSTAS (≤ 360px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 360px) {
+
+  .mobile-opponents-bar { gap: 6px; }
+
+  .mob-opp-avatar-wrap,
+  .mob-opp-avatar { width: 36px; height: 36px; }
+  .mob-opp-avatar { font-size: 18px; }
+  .mob-opp-avatar-wrap > svg { width: 44px !important; height: 44px !important; }
+
+  .center-table { top: 188px; transform: translateX(-50%) scale(.78); }
+
+  .mob-actions-react { width: 52px; }
+  .mob-actions-primary {
+    font-size: 14px;
+    padding: 0 10px;
+    letter-spacing: .12em;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHASE ANNOUNCEMENT BANNER — entra mesa / entra ciegas
+   Aparece arriba al centro ~2.5s. Adobe sobre madera con acento amarillo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.phase-announce-stack {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 220;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+}
+
+.phase-announce {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 22px 11px 14px;
+  background: linear-gradient(180deg, #1E1611 0%, #14100C 100%);
+  border: 1px solid rgba(242, 180, 49, .45);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .55), 0 0 0 1px rgba(217, 107, 44, .15);
+  animation: phase-announce-in .35s cubic-bezier(.2, 1.3, .4, 1) both,
+             phase-announce-out .4s ease-in 2.4s both;
+  pointer-events: auto;
+}
+
+.phase-announce-enter_blind {
+  border-color: rgba(217, 107, 44, .65);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .6),
+              0 0 0 1px rgba(217, 107, 44, .3),
+              0 0 24px rgba(217, 107, 44, .25);
+}
+
+.phase-announce-self {
+  border-color: rgba(242, 180, 49, .8);
+}
+
+.phase-announce-emoji {
+  font-size: 28px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .6));
+}
+
+.phase-announce-enter_blind .phase-announce-emoji {
+  animation: phase-flame 1s ease-in-out infinite;
+}
+
+@keyframes phase-flame {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  50%      { transform: scale(1.08) rotate(2deg); }
+}
+
+.phase-announce-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.phase-announce-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 18px;
+  letter-spacing: .12em;
+  color: #F0E4D0;
+}
+
+.phase-announce-name {
+  font-weight: 700;
+}
+
+.phase-announce-kicker {
+  color: #F2B431;
+  font-size: 14px;
+  letter-spacing: .14em;
+}
+
+.phase-announce-enter_blind .phase-announce-kicker {
+  color: #D96B2C;
+}
+
+.phase-announce-copy {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  color: rgba(240, 228, 208, .75);
+  text-transform: lowercase;
+}
+
+@keyframes phase-announce-in {
+  0%   { opacity: 0; transform: translateY(-16px) scale(.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes phase-announce-out {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+/* Mobile: encogemos y reposicionamos para no chocar con el spotlight strip */
+@media (max-width: 768px) {
+  .phase-announce-stack {
+    top: 50px;
+    max-width: calc(100vw - 16px);
+  }
+  .phase-announce {
+    padding: 7px 14px 8px 10px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+  .phase-announce-emoji {
+    font-size: 22px;
+  }
+  .phase-announce-head {
+    font-size: 14px;
+  }
+  .phase-announce-kicker {
+    font-size: 11px;
+  }
+  .phase-announce-copy {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .phase-announce-stack {
+    top: 46px;
+  }
+  .phase-announce {
+    padding: 6px 12px 7px 8px;
+  }
+  .phase-announce-head {
+    font-size: 13px;
+  }
+}

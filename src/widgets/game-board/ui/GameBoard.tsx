@@ -749,7 +749,7 @@ function HandActions({ canPlay, onPlay, onClear, onTake }: {
 function InterceptBanner({ canIntercept, onIntercept }: { canIntercept: boolean; onIntercept: () => void }) {
   if (!canIntercept) return null;
   return (
-    <div style={{ position: 'absolute', top: '38%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+    <div className="intercept-banner-overlay" style={{ position: 'absolute', top: '38%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
       <div style={{ fontFamily: 'Anton,sans-serif', fontSize: 24, letterSpacing: 4, color: '#E8FF3D', textShadow: '0 0 20px #E8FF3D' }}>INTERCEPCIÓN</div>
       <button onClick={onIntercept} style={{ background: '#E8FF3D', color: '#0e0b08', border: 'none', padding: '12px 32px', borderRadius: 999, fontFamily: 'Anton,sans-serif', fontSize: 18, letterSpacing: 2, cursor: 'pointer', boxShadow: '0 0 30px rgba(232,255,61,.5), 0 0 0 3px #0e0b08' }}>ROBAR TURNO</button>
     </div>
@@ -825,6 +825,242 @@ function OpponentMesa({ tableUp, tableDownCount }: {
           <div key={i} className={`opp-mesa-card ${i < tableDownCount ? 'opp-mesa-card-back' : 'opp-mesa-card-empty'}`} />
         ))}
       </div>
+    </div>
+  );
+}
+
+// ─── PhaseAnnouncement (transient banner top-center) ─────────────────────────
+// Tipos de transición de fase que detectamos.
+
+type PhaseKind = 'enter_table_up' | 'enter_blind';
+
+interface PhaseAnnouncement {
+  id: string;
+  kind: PhaseKind;
+  playerName: string;
+  playerColor: string;
+  isMe: boolean;
+}
+
+const PHASE_MESSAGES: Record<PhaseKind, { kicker: string; copy: string; emoji: string }> = {
+  enter_table_up: {
+    kicker: 'A LA MESA',
+    copy: 'se quedó sin mano · juega con las 4 de arriba',
+    emoji: '🎴',
+  },
+  enter_blind: {
+    kicker: '¡FASE CIEGA!',
+    copy: 'última barrera · pónganse en su contra',
+    emoji: '🔥',
+  },
+};
+
+function PhaseAnnouncementBanner({ ann, onDone }: { ann: PhaseAnnouncement; onDone: () => void }) {
+  useEffect(() => {
+    const id = setTimeout(onDone, 2800);
+    return () => clearTimeout(id);
+  }, [onDone]);
+  const msg = PHASE_MESSAGES[ann.kind];
+  return (
+    <div className={`phase-announce phase-announce-${ann.kind}${ann.isMe ? ' phase-announce-self' : ''}`}
+      role="status" aria-live="polite">
+      <span className="phase-announce-emoji" aria-hidden="true">{msg.emoji}</span>
+      <div className="phase-announce-body">
+        <div className="phase-announce-head">
+          <span className="phase-announce-name" style={{ color: ann.playerColor }}>
+            {ann.isMe ? 'TÚ' : ann.playerName.toUpperCase()}
+          </span>
+          <span className="phase-announce-kicker">· {msg.kicker}</span>
+        </div>
+        <div className="phase-announce-copy">{msg.copy}</div>
+      </div>
+    </div>
+  );
+}
+
+function PhaseAnnouncementsLayer({ items, onDismiss }: {
+  items: PhaseAnnouncement[];
+  onDismiss: (id: string) => void;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div className="phase-announce-stack" aria-live="polite">
+      {items.map(ann => (
+        <PhaseAnnouncementBanner key={ann.id} ann={ann} onDone={() => onDismiss(ann.id)} />
+      ))}
+    </div>
+  );
+}
+
+// Deriva fase de un jugador (self o opponent) a partir de sus cuentas.
+function derivePhase(handCount: number, tableUpCount: number, tableDownCount: number, status: string): 'hand' | 'table_up' | 'blind' | 'finished' {
+  if (status === 'finished') return 'finished';
+  if (handCount > 0) return 'hand';
+  if (tableUpCount > 0) return 'table_up';
+  if (tableDownCount > 0) return 'blind';
+  return 'finished';
+}
+
+// ─── MobileOpponentsBar (solo mobile — CSS lo activa) ────────────────────────
+
+function MobileOpponentsBar({
+  opponents, currentPlayerId, pinnedId, onTogglePin, remaining, total,
+}: {
+  opponents: PlayerView[];
+  currentPlayerId: string;
+  pinnedId: string | null;
+  onTogglePin: (id: string) => void;
+  remaining: number;
+  total: number;
+}) {
+  if (opponents.length === 0) return null;
+  return (
+    <div className="mobile-opponents-bar" aria-label="Oponentes">
+      {opponents.map(opp => {
+        const isActive = currentPlayerId === opp.id;
+        const isPinned = pinnedId === opp.id;
+        return (
+          <button
+            key={opp.id}
+            type="button"
+            className={`mob-opp${isActive ? ' mob-opp-active' : ''}${isPinned ? ' mob-opp-pinned' : ''}`}
+            onClick={() => onTogglePin(opp.id)}
+            aria-label={`Espiar a ${opp.name}`}
+            aria-pressed={isPinned}>
+            <div className="mob-opp-avatar-wrap">
+              {isActive && <AvatarTimerRing remaining={remaining} total={total} />}
+              <div className="mob-opp-avatar" style={{ background: opp.avatarColor }}>
+                {opp.name[0]}
+              </div>
+              <div className="mob-opp-count">{opp.handCount}</div>
+            </div>
+            <div className="mob-opp-name">{opp.name}</div>
+            {isActive && <div className="mob-opp-timer-text">{Math.ceil(remaining)}s</div>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── OpponentSpotlight (solo mobile) ──────────────────────────────────────────
+
+function OpponentSpotlight({ target }: { target: PlayerView | null }) {
+  if (!target) {
+    return (
+      <div className="mob-spotlight mob-spotlight-empty" aria-hidden="true">
+        <span className="mob-spotlight-empty-text">TU TURNO · LA MESA TE ESPERA</span>
+      </div>
+    );
+  }
+  const upSlots: Array<Card | null> = [
+    ...target.tableUp,
+    ...Array.from({ length: Math.max(0, 4 - target.tableUp.length) }, () => null),
+  ];
+  return (
+    <div className="mob-spotlight" role="status" aria-live="polite">
+      <div className="mob-spotlight-head">
+        <span className="mob-spotlight-title">ESPIANDO · {target.name.toUpperCase()}</span>
+        <span className="mob-spotlight-meta">
+          MANO {target.handCount} · CIEGAS {target.tableDownCount} · COMIO {target.penaltyCount}
+        </span>
+      </div>
+      <div className="mob-spotlight-row">
+        {upSlots.map((card, i) => card
+          ? (
+            <div key={card.id} className="mob-spotlight-card mob-spotlight-card-face"
+              style={{ color: SUIT_COLORS_MINI[card.suit] ?? '#f5f0e8' }}>
+              {card.rank}
+            </div>
+          )
+          : <div key={`empty-${i}`} className="mob-spotlight-card mob-spotlight-card-empty" />
+        )}
+        <div className="mob-spotlight-blinds" title={`${target.tableDownCount} ciegas restantes`}>
+          <span className="mob-spotlight-blinds-stack" />
+          <span className="mob-spotlight-blinds-count">×{target.tableDownCount}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MobileTurnStrip (solo mobile) ────────────────────────────────────────────
+
+function MobileTurnStrip({ remaining, total }: { remaining: number; total: number }) {
+  const pct = Math.max(0, Math.min(100, (remaining / total) * 100));
+  return (
+    <div className="mob-turn-strip" role="status" aria-live="polite">
+      <span className="mob-turn-strip-label">TU TURNO</span>
+      <div className="mob-turn-strip-track" aria-hidden="true">
+        <div className="mob-turn-strip-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="mob-turn-strip-secs">{Math.ceil(remaining)}s</span>
+    </div>
+  );
+}
+
+// ─── MobileActionBar (solo mobile, reemplaza HandActions) ─────────────────────
+
+function MobileActionBar({
+  canPlay, onPlay, onTake, canIntercept, onIntercept,
+  reactionsOpen, onToggleReactions, selfColor, selfInitial,
+}: {
+  canPlay: boolean;
+  onPlay: () => void;
+  onTake: () => void;
+  canIntercept: boolean;
+  onIntercept: () => void;
+  reactionsOpen: boolean;
+  onToggleReactions: () => void;
+  selfColor: string;
+  selfInitial: string;
+}) {
+  return (
+    <div className="mob-actions" role="toolbar" aria-label="Acciones">
+      <button
+        type="button"
+        className={`mob-actions-react${reactionsOpen ? ' mob-actions-react-open' : ''}`}
+        onClick={onToggleReactions}
+        aria-label="Reaccionar"
+        aria-expanded={reactionsOpen}>
+        <span className="mob-actions-react-avatar" style={{ background: selfColor }}>
+          {selfInitial}
+        </span>
+        <span className="mob-actions-react-icon" aria-hidden="true">+</span>
+      </button>
+
+      {canIntercept
+        ? (
+          <button
+            type="button"
+            className="mob-actions-secondary mob-actions-intercept"
+            onClick={onIntercept}
+            aria-label="Interceptar turno">
+            <span className="mob-actions-intercept-kicker">¡RÓBALO!</span>
+            <span className="mob-actions-intercept-label">INTERCEPTAR</span>
+          </button>
+        )
+        : (
+          <button
+            type="button"
+            className="mob-actions-secondary mob-actions-take"
+            onClick={onTake}
+            aria-label="Robar pozo">
+            <span className="mob-actions-take-icon" aria-hidden="true">⤵</span>
+            <span className="mob-actions-take-label">ROBAR POZO</span>
+          </button>
+        )
+      }
+
+      <button
+        type="button"
+        className={`mob-actions-primary${canPlay ? '' : ' mob-actions-primary-disabled'}`}
+        onClick={onPlay}
+        disabled={!canPlay}
+        aria-label="Tirar carta seleccionada">
+        <span className="mob-actions-primary-label">TIRAR</span>
+        <span className="mob-actions-primary-arrow" aria-hidden="true">▸</span>
+      </button>
     </div>
   );
 }
@@ -1184,6 +1420,14 @@ export function GameBoard() {
   const [timerRemaining, setTimerRemaining] = useState(TURN_SECONDS);
   const [specialAnim, setSpecialAnim] = useState<SpecialKind | null>(null);
   const [gordoActive, setGordoActive] = useState(false);
+  // Spotlight mobile: rival fijado manualmente. Si es null, auto-sigue al turno.
+  const [pinnedSpotlightId, setPinnedSpotlightId] = useState<string | null>(null);
+  // Panel de reacciones mobile (toggleable).
+  const [mobileReactionsOpen, setMobileReactionsOpen] = useState(false);
+  // Anuncios de transición de fase (entrar a tableUp, entrar a ciegas).
+  const [phaseAnnouncements, setPhaseAnnouncements] = useState<PhaseAnnouncement[]>([]);
+  // Map playerId -> fase previa, para detectar transiciones entre ROOM_STATEs.
+  const prevPhasesRef = useRef<Record<string, 'hand' | 'table_up' | 'blind' | 'finished'>>({});
 
   // Track previous top card to detect special card plays
   const prevTopCardId = useRef<string | null>(null);
@@ -1205,6 +1449,62 @@ export function GameBoard() {
     const id = setInterval(update, 200);
     return () => clearInterval(id);
   }, [gameView?.turnStartedAt, gameView?.phase, gameView?.currentPlayerId]);
+
+  // ── Reset spotlight pin & reactions overlay on turn change (mobile) ─────────
+  useEffect(() => {
+    setPinnedSpotlightId(null);
+    setMobileReactionsOpen(false);
+  }, [gameView?.currentPlayerId]);
+
+  // ── Detect phase transitions (hand→table_up, table_up→blind) ─────────────
+  useEffect(() => {
+    if (!gameView || gameView.phase !== 'playing') return;
+    const prev = prevPhasesRef.current;
+    const next: Record<string, 'hand' | 'table_up' | 'blind' | 'finished'> = {};
+
+    const players: Array<{ id: string; name: string; color: string; hand: number; up: number; down: number; status: string; isMe: boolean }> = [];
+    if (gameView.self) {
+      players.push({
+        id: gameView.self.id, name: gameView.self.name, color: gameView.self.avatarColor,
+        hand: gameView.self.hand.length, up: gameView.self.tableUp.length,
+        down: gameView.self.tableDownCount, status: gameView.self.status, isMe: true,
+      });
+    }
+    for (const opp of gameView.opponents) {
+      players.push({
+        id: opp.id, name: opp.name, color: opp.avatarColor,
+        hand: opp.handCount, up: opp.tableUp.length,
+        down: opp.tableDownCount, status: opp.status, isMe: false,
+      });
+    }
+
+    const newAnnouncements: PhaseAnnouncement[] = [];
+    for (const p of players) {
+      const curPhase = derivePhase(p.hand, p.up, p.down, p.status);
+      next[p.id] = curPhase;
+      const prevPhase = prev[p.id];
+      // Solo anunciamos si conociamos su fase previa (evitamos anuncios al
+      // primer ROOM_STATE de la partida).
+      if (prevPhase && prevPhase !== curPhase) {
+        if (prevPhase === 'hand' && curPhase === 'table_up') {
+          newAnnouncements.push({
+            id: `${p.id}-tu-${Date.now()}`, kind: 'enter_table_up',
+            playerName: p.name, playerColor: p.color, isMe: p.isMe,
+          });
+        } else if ((prevPhase === 'hand' || prevPhase === 'table_up') && curPhase === 'blind') {
+          newAnnouncements.push({
+            id: `${p.id}-bl-${Date.now()}`, kind: 'enter_blind',
+            playerName: p.name, playerColor: p.color, isMe: p.isMe,
+          });
+        }
+      }
+    }
+
+    prevPhasesRef.current = next;
+    if (newAnnouncements.length > 0) {
+      setPhaseAnnouncements(curr => [...curr, ...newAnnouncements]);
+    }
+  }, [gameView]);
 
   // ── Detect special card plays (discardTopCard rank change) ───────────────────
   useEffect(() => {
@@ -1300,16 +1600,27 @@ export function GameBoard() {
       velHistory.current.push({ x: e.clientX, y: e.clientY, t: now });
       if (velHistory.current.length > 10) velHistory.current.shift();
 
-      // Dropzone hit-test
-      const zone = document.querySelector('[data-pozo-drop="1"]');
+      // Dropzone hit-test — desktop solo cuenta el .pozo-drop-zone clasico.
+      // En mobile (<=768px) tambien se acepta .center-table (data-mesa-drop)
+      // como zona amplia para que soltar la carta no requiera precision.
+      const isMobile = typeof window !== 'undefined'
+        && window.matchMedia('(max-width: 768px)').matches;
+      const selector = isMobile
+        ? '[data-pozo-drop="1"], [data-mesa-drop="1"]'
+        : '[data-pozo-drop="1"]';
+      const zones = document.querySelectorAll(selector);
       let overDrop = false;
-      if (zone) {
-        const r = zone.getBoundingClientRect();
-        overDrop = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      for (const z of Array.from(zones)) {
+        const r = (z as HTMLElement).getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+          overDrop = true;
+          break;
+        }
       }
 
-      // Flick ready: moving upward fast enough, at least 40px from start
-      const flickReady = moved && dy < -40;
+      // Flick ready: moving upward fast enough, al menos 32px desde el inicio
+      // (umbral mas bajo para que mobile sea mas tolerante).
+      const flickReady = moved && dy < -32;
 
       setDrag(d => d ? { ...d, x: e.clientX, y: e.clientY, moved, overDrop, flickReady } : null);
     };
@@ -1328,8 +1639,9 @@ export function GameBoard() {
         const vy = (last.y - first.y) / dt; // px/ms — negative = upward
         const vx = (last.x - first.x) / dt;
         const speed = Math.sqrt(vx * vx + vy * vy);
-        // Flick: upward velocity > 0.4 px/ms AND fast enough
-        flicked = vy < -0.4 && speed > 0.35;
+        // Flick: upward velocity > 0.25 px/ms AND fast enough.
+        // Bajado de 0.4 a 0.25 — dedos sobre pantalla son mas lentos que mouse.
+        flicked = vy < -0.25 && speed > 0.22;
       }
 
       const shouldPlay = (drag.overDrop && drag.moved) || (flicked && drag.moved);
@@ -1443,23 +1755,48 @@ export function GameBoard() {
         />
       )}
 
-      {/* ── Opponent corners ──────────────────────────────── */}
-      {opponents.map((opp) => (
-        <PlayerCorner key={opp.id} player={opp}
-          active={currentPlayerId === opp.id}
-          remaining={timerRemaining} total={TURN_SECONDS}
-          position={self
-            ? getOpponentPosition(self.seatIndex, opp.seatIndex, totalPlayers)
-            : POSITIONS[opponents.indexOf(opp) % 3]!}
-          lastReaction={lastReacts[opp.id] ?? null} />
-      ))}
+      {/* ── Opponent corners (DESKTOP — CSS oculta en mobile) ──────── */}
+      <div className="opponent-corners-desktop">
+        {opponents.map((opp) => (
+          <PlayerCorner key={opp.id} player={opp}
+            active={currentPlayerId === opp.id}
+            remaining={timerRemaining} total={TURN_SECONDS}
+            position={self
+              ? getOpponentPosition(self.seatIndex, opp.seatIndex, totalPlayers)
+              : POSITIONS[opponents.indexOf(opp) % 3]!}
+            lastReaction={lastReacts[opp.id] ?? null} />
+        ))}
+      </div>
+
+      {/* ── Mobile opponents bar (MOBILE — CSS oculta en desktop) ──── */}
+      {phase === 'playing' && (
+        <MobileOpponentsBar
+          opponents={opponents}
+          currentPlayerId={currentPlayerId}
+          pinnedId={pinnedSpotlightId}
+          onTogglePin={(id) => setPinnedSpotlightId(prev => prev === id ? null : id)}
+          remaining={timerRemaining}
+          total={TURN_SECONDS}
+        />
+      )}
+
+      {/* ── Mobile spotlight strip (MOBILE only) ───────────────────── */}
+      {phase === 'playing' && (
+        <OpponentSpotlight
+          target={(() => {
+            const effectiveId = pinnedSpotlightId
+              ?? (currentPlayerId !== self?.id ? currentPlayerId : null);
+            return opponents.find(o => o.id === effectiveId) ?? null;
+          })()}
+        />
+      )}
 
       {/* ── Center: deck + pozo or lobby ─────────────────── */}
       {phase === 'lobby' ? (
         <InviteLobbyPanel roomId={roomId} players={opponents}
           selfName={self?.name ?? ''} selfColor={self?.avatarColor ?? '#FF6A1A'} />
       ) : (
-        <div className="center-table">
+        <div className="center-table" data-mesa-drop="1">
           <DeckStack deckCount={deckCount} onClick={takePile} />
           <Pozo topCard={discardTopCard} pileCount={discardPileCount}
             dropHover={dropHover} justSlammed={slamPulse} />
@@ -1516,8 +1853,41 @@ export function GameBoard() {
               canPlay={selectedCardIds.length > 0 || (self.hand.length === 0 && self.tableUp.length === 0 && self.tableDownCount > 0)}
               onPlay={handlePlay} onClear={clearSel} onTake={takePile} />
           )}
+
+          {/* ── Mobile turn strip (visible solo cuando es mi turno) ─────── */}
+          {phase === 'playing' && currentPlayerId === self.id && (
+            <MobileTurnStrip remaining={timerRemaining} total={TURN_SECONDS} />
+          )}
+
+          {/* ── Mobile action bar (MOBILE only — CSS oculta en desktop) ─── */}
+          {phase === 'playing' && (
+            <MobileActionBar
+              canPlay={selectedCardIds.length > 0 || (self.hand.length === 0 && self.tableUp.length === 0 && self.tableDownCount > 0)}
+              onPlay={handlePlay}
+              onTake={takePile}
+              canIntercept={canIntercept}
+              onIntercept={interceptTurn}
+              reactionsOpen={mobileReactionsOpen}
+              onToggleReactions={() => setMobileReactionsOpen(o => !o)}
+              selfColor={self.avatarColor}
+              selfInitial={self.name[0] ?? '?'}
+            />
+          )}
+
+          {/* ── Mobile reactions popover (overlay sobre actions) ────────── */}
+          {phase === 'playing' && mobileReactionsOpen && opponents.length > 0 && (
+            <div className="mob-reactions-overlay" onClick={() => setMobileReactionsOpen(false)}>
+              <div className="mob-reactions-inner" onClick={(e) => e.stopPropagation()}>
+                <SelfReactionBar opponents={opponents} onReact={(pid, kind) => {
+                  onReact(pid, kind);
+                  setMobileReactionsOpen(false);
+                }} />
+              </div>
+            </div>
+          )}
+
           {phase === 'lobby' && (
-            <div className="hand-actions">
+            <div className="hand-actions lobby-start-actions">
               <button className="btn-play" onClick={startGame}>INICIAR PARTIDA</button>
             </div>
           )}
@@ -1565,6 +1935,11 @@ export function GameBoard() {
 
       {/* Gordo Gloton */}
       {gordoActive && <GordoGloton onDone={() => setGordoActive(false)} />}
+
+      {/* Phase announcements (transient banner top-center) */}
+      <PhaseAnnouncementsLayer
+        items={phaseAnnouncements}
+        onDismiss={(id) => setPhaseAnnouncements(curr => curr.filter(a => a.id !== id))} />
 
       {/* Notifications */}
       <Notifications />
